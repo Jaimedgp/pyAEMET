@@ -1,0 +1,2 @@
+from pyaemet.AEMET import *
+
