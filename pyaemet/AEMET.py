@@ -88,7 +88,7 @@ class AEMET():
 
             |  Code  |            Meaning           |  New Value   |
             |:------:|:----------------------------:|:------------:|
-            |   Ip   | prec < 0.1mm (Inappreciable) |     0.05      |
+            |   Ip   | prec < 0.1mm (Inappreciable) |     0.05     |
             | Varios |         Various hours        |     -2       |
 
             @params:
