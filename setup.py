@@ -20,7 +20,6 @@ setuptools.setup(
         "License :: OSI Approved :: GNU General Public License v3.0",
         "Operating System :: OS Independent",
     ],
-    package_dir={"": "pyaemet"},
-    packages=setuptools.find_packages(where="pyaemet"),
+    packages=setuptools.find_packages(),
     python_requires=">=3.6",
 )
