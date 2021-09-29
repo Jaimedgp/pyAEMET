@@ -14,6 +14,7 @@ import tempfile as tmpfl
 import requests
 
 from dateutil.relativedelta import relativedelta
+from time import sleep
 
 
 class AEMET_API():
@@ -104,17 +105,26 @@ class AEMET_API():
         data = []
 
         for i, (j, k) in enumerate(split_dt):
-            to_obtain = requests.get((self.main_url +
-                                      self.clima_url +
-                                      "diarios/datos/" +
-                                      "fechaini/" + str(j) + "T00:00:00UTC/" +
-                                      "fechafin/" + str(k) + "T23:59:59UTC/" +
-                                      "estacion/" + station_id + "/" +
-                                      self.api
-                                      ), {'accept': 'application/json'}
-                                     ).json()
+            downloaded = False
 
-            print("%s/%s: %s" % (i+1, len(split_dt), to_obtain['descripcion']))
+            while not downloaded:
+                to_obtain = requests.get((self.main_url +
+                                        self.clima_url +
+                                        "diarios/datos/" +
+                                        "fechaini/" + str(j) + "T00:00:00UTC/" +
+                                        "fechafin/" + str(k) + "T23:59:59UTC/" +
+                                        "estacion/" + station_id + "/" +
+                                        self.api
+                                        ), {'accept': 'application/json'}
+                                        ).json()
+
+                if "Espere al siguiente minuto" in to_obtain['descripcion']:
+                    print("Number of requests exceed. Sleeping 1 minute")
+                    sleep(35)
+                else:
+                    break
+
+            #print("%s/%s: %s" % (i+1, len(split_dt), to_obtain['descripcion']))
 
             if to_obtain['descripcion'] == "exito":
                 data_json = requests.get(to_obtain["datos"],
