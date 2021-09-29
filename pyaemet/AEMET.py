@@ -16,7 +16,7 @@ import requests
 from dateutil.relativedelta import relativedelta
 
 
-class AEMET():
+class AEMET_API():
     """ Class to download climatological data using AEMET api"""
 
     def __init__(self, apikey):
@@ -45,7 +45,7 @@ class AEMET():
         for col in ["latitud", "longitud"]:
             self.stations[col] = self.stations.apply(
                 lambda df, col:
-                DownloadAEMET.convert_coordiantes(df[col]),
+                AEMET_API.convert_coordiantes(df[col]),
                 axis=1, col=col
                 )
 
@@ -70,7 +70,7 @@ class AEMET():
 
         n_stations = self.stations.copy()
 
-        n_stations["dist"] = DownloadAEMET.calc_dist(
+        n_stations["dist"] = AEMET_API.calc_dist(
             [n_stations["latitud"].values,
              n_stations["longitud"].values],
             [lat, long])
@@ -100,7 +100,7 @@ class AEMET():
                 station.
         """
 
-        split_dt = DownloadAEMET.split_date(dates[0], dates[1])
+        split_dt = AEMET_API.split_date(dates[0], dates[1])
         data = []
 
         for i, (j, k) in enumerate(split_dt):
@@ -126,7 +126,7 @@ class AEMET():
         data_pd = pd.DataFrame.from_dict(data) .replace({"Ip": "0,05",
                                                          "Varias": -2})
 
-        return DownloadAEMET.dot_decimals(data_pd)
+        return AEMET_API.dot_decimals(data_pd)
 
     @staticmethod
     def split_date(start_dt, end_dt):
@@ -211,7 +211,7 @@ class AEMET():
 
     @staticmethod
     def convert_coordiantes(coordinate):
-        """ Convert AEMET longitude or latitude angles in degrees, minutes and
+        """ Convert AEMET_API longitude or latitude angles in degrees, minutes and
             seconds into float number in degrees
 
             E -> +       |    W -> -
