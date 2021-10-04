@@ -7,56 +7,46 @@ import geocoder as gc
 from dateutil.relativedelta import relativedelta
 
 
-def split_date(start_dt, end_dt):
+def split_date(start, end):
     """
         Check if interval between start_dt and end_dt is bigger than 5
         years, and if so, divide it in interval of less than 5 years.
 
         @params:
-            start_dt: beginning date of interval
-            end_dt: ending date of interval
+            start: beginning date of interval
+            end: ending date of interval
         @return:
             list of tuplas with inteval of less than 5 years between
-            start_dt and end_dt
+            start date and end date
     """
 
-    if relativedelta(end_dt, start_dt).years < 5:
-        dates = [(start_dt, end_dt)]
-    else:
-        new_dt = end_dt.replace(year=end_dt.year - 4)
-        new_end = end_dt
-        dates = [(new_dt, new_end)]
+    n_intervals = relativedelta(end, start).years // 4
 
-        while relativedelta(new_dt, start_dt).years > 5:
-            dates.append((new_dt, new_end))
-
-            new_end = new_dt
-            new_dt = new_dt.replace(year=end_dt.year - 4)
-
-        dates.append((start_dt, new_dt))
-
-    return dates
+    return ([(start.replace(year=start.year + (i-1)*4),
+              start.replace(year=start.year + (i)*4))
+             for i in range(1, n_intervals+1)]
+            + [(start.replace(year=start.year + n_intervals*4), end)])
 
 
-def dot_decimals(data_coma):
+def decimal_notation(dataframe, notation=","):
     """
         Replace coma '0,0' decimals to dot '0.0'
 
         @params:
-            data_coma: pandas DataFrame with decimals in coma notation
+            dataframe: pandas DataFrame with decimals in original notation
+            notation: original notation. Default: ','
         @return:
             pandas DataFrame with float decimal with dot notation
     """
 
     tmp_fl = tmpfl.NamedTemporaryFile().name
 
-    data_coma.to_csv(tmp_fl, sep=";", index=False)
-    data_dots = pd.read_csv(tmp_fl, sep=";", decimal=",")
+    dataframe.to_csv(tmp_fl, sep=";", index=False)
 
-    return data_dots
+    return pd.read_csv(tmp_fl, sep=";", decimal=notation)
 
 
-def calc_dist(pos1, pos2, radius=6371):
+def calc_dist_to(coor1, coor2, radius=6371):
     """
         Calculate distance between locations given in latitudes and
         longitudes coordinates. The distance is calculated using the
@@ -67,9 +57,9 @@ def calc_dist(pos1, pos2, radius=6371):
                         cos(lat1)*cos(lat2)*[1 cos(long1 - long2)]}
 
         @params:
-            pos1: list of coordinates of first location
+            coor1: list of coordinates of first location
                     e.g.: [latitude,longitude]
-            pos1: list of coordinates of second location
+            corr2: list of coordinates of second location
                     e.g.: [latitude,longitude]
             radius: earth radius
         @return:
@@ -77,13 +67,13 @@ def calc_dist(pos1, pos2, radius=6371):
             is given in km)
     """
 
-    pos1 = np.deg2rad(pos1)
-    pos2 = np.deg2rad(pos2)
+    coor1 = np.deg2rad(coor1)
+    coor2 = np.deg2rad(coor2)
 
-    dist = radius * np.arccos(np.cos(pos1[0] - pos2[0]) -
-                              np.cos(pos1[0]) *
-                              np.cos(pos2[0]) *
-                              (1 - np.cos(pos1[1] - pos2[1])))
+    dist = radius * np.arccos(np.cos(coor1[0] - coor2[0]) -
+                              np.cos(coor1[0]) *
+                              np.cos(coor2[0]) *
+                              (1 - np.cos(coor1[1] - coor2[1])))
 
     return dist
 
@@ -113,27 +103,50 @@ def convert_coordinates(coordinate):
 
 
 def get_address(lat, long):
-    """ obtain the city, province and Autonomus community of a coordiante """
+    """ Obtain the district, city, province and Autonomus community
+        of a coordiante.
+
+        @params:
+            lat: float of the latitude coordinate in degrees
+            long: float of the longitude coordinate in degrees
+        @return:
+            pandas DataFrame with the latitude, longitude, district, city,
+            province and autonomus community
+    """
 
     address_data = gc.arcgis([lat, long],
                              method='reverse').json["raw"]["address"]
 
-    address_data.update({"Latitude": lat,
-                         "Longitude": long})
+    address_data.update({"latitude": lat,
+                         "longitude": long})
 
     return pd.DataFrame(pd.Series(address_data)).T[["District",
                                                     "City",
                                                     "Subregion",
                                                     "Region",
                                                     "CountryCode",
-                                                    "Latitude",
-                                                    "Longitude"]]
+                                                    "latitude",
+                                                    "longitude"]]
 
 
-def for_dataframe(a):
+def get_site_address(dataframe):
+    """ Obtain the district, city, province and Autonomus community
+        of a coordiante.
 
-    return a.merge(pd.concat([get_address(x["Latitude"],
-                                          x["Longitude"]
-                                          ) for i, x in a.iterrows()
-                              ]),
-                   on=["Latitude", "Longitude"])
+        @params:
+            dataframe: pandas DataFrame with latitude and longitude coordinates
+            as columns.
+        @return:
+            pandas DataFrame with the latitude, longitude, district, city,
+            province and autonomus community
+    """
+
+    rows_sites = [get_address(x["latitude"],
+                              x["longitude"]
+                              ) for i, x in dataframe.iterrows()]
+
+    addresses = pd.concat(rows_sites).rename(columns={"Latitude": "latitude",
+                                                      "Longitude": "longitude"}
+                                             )
+
+    return dataframe.merge(addresses, on=["latitude", "longitude"])
