@@ -5,6 +5,7 @@ import pandas as pd
 import geocoder as gc
 
 from dateutil.relativedelta import relativedelta
+from datetime import datetime
 
 
 def split_date(start, end):
@@ -150,3 +151,21 @@ def get_site_address(dataframe):
                                              )
 
     return dataframe.merge(addresses, on=["latitude", "longitude"])
+
+
+def horavariable_type(row):
+    """ AEMET horavariable dtype """
+
+    if row['horatmin'] == "-2:00":
+        return datetime(1, 1, 1, 0, 0)
+    if row['horatmin'] == "00:00":
+        return datetime(row['fecha'].year,
+                        row['fecha'].month,
+                        row['fecha'].day,
+                        0, 0)
+    hora = pd.to_datetime(row['horatmin'], format="%H:%M",)
+
+    return datetime(row['fecha'].year,
+                    row['fecha'].month,
+                    row['fecha'].day,
+                    hora.hour, hora.minute)

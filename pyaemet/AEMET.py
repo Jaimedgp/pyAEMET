@@ -30,123 +30,68 @@ class AEMETAPI():
 
         self.sites = None
 
-    def get_sites(self):
-        """ Obtain all AEMET sites information """
+    def request_data(self, url):
+        """ Docstring """
 
-        self.sites = pd.read_csv("~/Repositories/pyAEMET/prueba.csv")
-
+        # PONER AQUI EL TRATAMIENTO DEL ERROR AL REALIZAR DEMASIADAS CONSULTAS
         request = requests.request("GET",
                                    self.main_url +
                                    self.clima_url +
-                                   "inventarioestaciones/todasestaciones/",
+                                   url,
                                    headers=self.headers,
                                    params=self.api).json()
 
         if request['estado'] == 200:
-            data = requests.request("GET",
+            return requests.request("GET",
                                     request['datos'],
                                     headers=self.headers,
                                     params=self.api).json()
+        # if request['estado'] == 404:
+        print(request['estado'], request['descripcion'])
+        return False
 
-        new_sites = pd.DataFrame.from_dict(data)
+    def get_sites(self):
+        """ Obtain all AEMET sites information """
 
-        if (new_sites["indicativo"].isin(self.sites["indicativo"]).all()):
+        self.sites = pd.read_pickle("~/Repositories/pyAEMET/doc/sites.pkl")
+
+        request = self.request_data("inventarioestaciones/todasestaciones/")
+
+        new_sites = pd.DataFrame.from_dict(request)
+
+        if new_sites["indicativo"].isin(self.sites["indicativo"]).all():
             return self.sites
 
-        for col in ["latitud", "longitud"]:
-            new_sites[col] = new_sites.apply(
-                lambda df, col: convert_coordinates(df[col]), axis=1, col=col)
+        print("Updating sites database...")
 
-        self.sites = get_site_address(new_sites.rename(
-                                      columns={"latitud": "latitude",
-                                               "longitud": "longitude"}))
+        included_st = self.sites[
+                self.sites["indicativo"].isin(new_sites["indicativo"])
+                ].copy()
+        not_included_st = new_sites[
+                ~new_sites["indicativo"].isin(self.sites["indicativo"])
+                ].copy()
+
+        not_included_st[["latitud",
+                         "longitud"]
+                        ] = not_included_st[["latitud",
+                                             "longitud"]
+                                            ].applymap(convert_coordinates)
+
+        not_included_st = get_site_address(not_included_st.rename(
+            columns={"latitud": "latitude",
+                     "longitud": "longitude"}))
+
+        self.sites = pd.concat([included_st,
+                                not_included_st]
+                               ).astype({'latitude': 'float64',
+                                         'altitud': 'float64',
+                                         'longitude': 'float64'
+                                         })
 
         return self.sites
 
-    def get_data(self, site, start, end=date.today()):
-        """
-            Download climate data from AEMET station. Aemet include same
-            values that have to be replace to make the dataset readable
-            for everyone.
-
-            - Replace coma '0,0' decimals to dot '0.0'
-            - Replace strings in numerical columns by a numeric key
-
-            |  Code  |            Meaning           |  New Value   |
-            |:------:|:----------------------------:|:------------:|
-            |   Ip   | prec < 0.1mm (Inappreciable) |     0.05     |
-            | Varios |         Various hours        |     -2       |
-
-            @params:
-                site: AEMET station identification named 'indicativo' in
-                    AEMET sites dataset
-                start:
-                end: Default today date
-            @return:
-                pandas DataFrame with climate data between dates for station_id
-                station.
-        """
-
-        split_dt = split_date(start, end)
-        data = []
-
-        if isinstance(site, str):
-            site = [site]
-        elif isinstance(site, list):
-            pass
-        elif isinstance(site, pd.DataFrame):
-            site = list(site["indicativo"].values)
-
-        for st in site:
-            for i, (j, k) in enumerate(split_dt):
-                downloaded = False
-
-                while not downloaded:
-                    to_obtain = requests.request(
-                        "GET",
-                        self.main_url +
-                        self.clima_url +
-                        "diarios/datos/" +
-                        "fechaini/" + str(j) +
-                        "T00:00:00UTC/" +
-                        "fechafin/" + str(k) +
-                        "T23:59:59UTC/" +
-                        "estacion/" + st + "/",
-                        headers=self.headers,
-                        params=self.api).json()
-
-                    if ("Espere al siguiente minuto" in
-                            to_obtain['descripcion']):
-                        print(to_obtain['estado'])
-                        print("Number of requests exceed. Sleeping 1 minute")
-                        sleep(35)
-                    else:
-                        break
-
-                if to_obtain['estado'] == 200:
-                    data_json = requests.request("GET",
-                                                 to_obtain["datos"],
-                                                 headers=self.headers,
-                                                 params=self.api).json()
-                    data += data_json
-                elif to_obtain['estado'] == 404:
-                    print("%s %i-%i: %s" % (st,
-                                            j.year, k.year,
-                                            to_obtain['descripcion']))
-                else:
-                    print(to_obtain['estado'])
-
-        data_pd = pd.DataFrame.from_dict(data).replace({"Ip": "0,05",
-                                                        "Varias": -2})
-
-        return decimal_notation(data_pd, notation=",").drop(["nombre",
-                                                             "provincia",
-                                                             "altitud"],
-                                                            axis=1)
-
     def get_near_sites(self, lat, long, n_near=3):
-        """
-            Obtain the n nearest AEMET sites to the location given by
+        """ Obtain the n nearest AEMET sites to the location given by
             lattitude and longitude
 
             @params:
@@ -163,8 +108,8 @@ class AEMETAPI():
 
         n_sites = self.sites.copy()
 
-        n_sites["dist"] = calc_dist_to([n_sites["latitud"].values,
-                                        n_sites["longitud"].values],
+        n_sites["dist"] = calc_dist_to([n_sites["latitude"].values,
+                                        n_sites["longitude"].values],
                                        [lat, long])
 
         return n_sites.sort_values(by=['dist'], ascending=True)[:n_near]
@@ -203,3 +148,62 @@ class AEMETAPI():
             return False
 
         return filter_sites
+
+    def get_data(self, sites, start, end=date.today()):
+        """
+            Download climate data from AEMET station. Aemet include same
+            values that have to be replace to make the dataset readable
+            for everyone.
+
+            - Replace coma '0,0' decimals to dot '0.0'
+            - Replace strings in numerical columns by a numeric key
+
+            |  Code  |            Meaning           |  New Value   |
+            |:------:|:----------------------------:|:------------:|
+            |   Ip   | prec < 0.1mm (Inappreciable) |     0.05     |
+            | Varios |         Various hours        |     -2       |
+
+            @params:
+                site: AEMET station identification named 'indicativo' in
+                    AEMET sites dataset
+                start:
+                end: Default today date
+            @return:
+                pandas DataFrame with climate data between dates for station_id
+                station.
+        """
+
+        split_dt = split_date(start, end)
+        data = []
+
+        if isinstance(sites, str):
+            sites = [sites]
+        elif isinstance(sites, list):
+            pass
+        elif isinstance(sites, pd.DataFrame):
+            sites = list(sites["indicativo"].values)
+
+        for st in sites:
+            for i, (j, k) in enumerate(split_dt):
+
+                to_obtain = self.request_data(
+                    "diarios/datos/" +
+                    "fechaini/" + str(j) +
+                    "T00:00:00UTC/" +
+                    "fechafin/" + str(k) +
+                    "T23:59:59UTC/" +
+                    "estacion/" + st + "/")
+
+                if not isinstance(to_obtain, bool):
+                    type(to_obtain)
+                    data += to_obtain
+                else:
+                    print(to_obtain)
+
+        data_pd = pd.DataFrame.from_dict(data).replace({"Ip": "0,05",
+                                                        "Varias": "-2:00"})
+
+        return decimal_notation(data_pd, notation=",").drop(["nombre",
+                                                             "provincia",
+                                                             "altitud"],
+                                                            axis=1)
