@@ -10,12 +10,11 @@ from datetime import date
 import tempfile as tmpfl
 from dateutil.relativedelta import relativedelta
 import pandas as pd
-import numpy as np
-import geocoder as gc
 import requests
 
 from pyaemet.aemet_api_request import _AemetApiUse
 from pyaemet import __dataset_doi__
+from pyaemet.utilities import calc_dist_to, update_sites
 
 
 class AemetClima():
@@ -25,7 +24,7 @@ class AemetClima():
         """ Get the needed API key"""
 
         self._aemet_api = _AemetApiUse(apikey)
-        self._old_dataset = _read_sites_database()
+        self._old_dataset = self._read_sites_database()
 
     def _get_clima(self, params):
         """ Docstring """
@@ -35,13 +34,16 @@ class AemetClima():
                "fechafin/{fechaFinStr}/estacion/{idema}").format(**params)
 
         aemet_data, aemet_metadata = self._aemet_api.request_info(url=url)
+        aemet_data = pd.DataFrame.from_dict(aemet_data)
 
-        aemet_data = pd.DataFrame.from_dict(aemet_data) \
-                                 .replace({"Ip": "0,05",
-                                           "Varias": "-1"
-                                           })
-        aemet_data = _decimal_notation(aemet_data)
-        aemet_data = _columns_dtypes(aemet_data)
+        if aemet_data.empty:
+            return aemet_data
+
+        aemet_data = aemet_data.replace({"Ip": "0,05",
+                                         "Varias": "-1"
+                                         })
+        aemet_data = self._decimal_notation(aemet_data)
+        aemet_data = self._columns_dtypes(aemet_data)
 
         aemet_data.attrs = aemet_metadata
 
@@ -62,7 +64,7 @@ class AemetClima():
         aemet_st[["latitud",
                   "longitud"]] = aemet_st[["latitud",
                                            "longitud"]].applymap(
-                                               _coordinates)
+                                               self._coordinates)
         aemet_st.attrs = aemet_metadata
 
         return aemet_st
@@ -103,10 +105,11 @@ class AemetClima():
         if isinstance(estacion, list):
             estacion = ",".join(estacion)
         if isinstance(estacion, pd.DataFrame):
-            estacion = ",".join(estacion.indicativo.drop_duplicates(
-                ).to_list())
+            estacion = ",".join(estacion.indicativo
+                                        .drop_duplicates()
+                                        .to_list())
 
-        parameters = _split_date(fecha_ini, fecha_fin)
+        parameters = self._split_date(fecha_ini, fecha_fin)
 
         aemet_data = pd.DataFrame()
 
@@ -138,14 +141,15 @@ class AemetClima():
 
         aemet_sites = self.estaciones_info()
 
-        if aemet_sites.columns.isin(kwargs.keys()).sum() != len(kwargs):
-            print("""
-Alguno de los criterios de filtrado seleccionados no corresponde a informacion
-de las estaciones.
-Revisa que los criterios correspondan a las columnas del pd.DataFrame devuelto
-por la función AemetClima.sites_info()
-""")
-
+        if any(type(x) != list for x in kwargs.values()):
+            print("Los valores de filtrados deben ser listas")
+            return None
+        if any(x not in aemet_sites.columns for x in kwargs.keys()):
+            print("Alguno de los criterios de filtrado seleccionados no " +
+                  "corresponde a la \ninformacion de las estaciones.\n" +
+                  "Revisa que los criterios correspondan a las columnas del" +
+                  "pd.DataFrame devuelto \npor la función " +
+                  "AemetClima.sites_info()")
             return None
 
         for ky, vl in kwargs.items():
@@ -175,192 +179,177 @@ por la función AemetClima.sites_info()
         return aemet_st.sort_values(by=['distancia'],
                                     ascending=True)[:n_cercanas]
 
+    def estaciones_curacion(self, fecha_ini, fecha_fin=date.today(),
+            umbral=0.75, variables='all', save_folder=None, **kwargs):
+        """ Docstring """
 
-def calc_dist_to(coor1, coor2, radius=6371):
-    """
-    Calculate distance between locations given in latitudes and
-    longitudes coordinates. The distance is calculated using the
-    following equation:
+        if "estacion" in kwargs.keys():
+            if isinstance(kwargs["estacion"], pd.DataFrame):
+                estaciones = kwargs["estacion"].copy()
+                id_estaciones = kwargs["estacion"].indicativo
+            else:
+                if (isinstance(kwargs["estacion"], list) or
+                    isinstance(kwargs["estacion"], str)):
+                    estaciones = pd.DataFrame(
+                        columns={"indicativo": kwargs["estacion"]})
+                else:
+                    print("El argumento estacion no es valido, por favor pase " +
+                        "el indicativo de la estacion\n en forma de 'string' " +
+                        "o lista de 'string' o pase un dataframe con la " +
+                        "informacion\n de la estacion")
+                    return False
 
-        dist = radius *
-            arcocos{cos(lat1 - lat2) -
-                    cos(lat1)*cos(lat2)*[1 cos(long1 - long2)]}
+            for indicativo in estaciones.indicativo:
+                data = self.clima_diaria(indicativo, fecha_ini, fecha_fin)
+                if data.empty:
+                    continue
 
-    :param coor1: list of coordinates of first location
-        e.g.: [latitude,longitude]
-    :param corr2: list of coordinates of second location
-        e.g.: [latitude,longitude]
-    :param radius: earth radius
+                is_enough = self._have_enough(data,
+                                              fecha_ini, fecha_fin,
+                                              umbral, variables)
 
-    :returns: distance between the two locations in kilometers
-        (Due to radius is given in km)
-    """
+                estaciones.loc[estaciones["indicativo"] == indicativo,
+                               "suficientesDatos"] = is_enough
 
-    coor1 = np.deg2rad(coor1)
-    coor2 = np.deg2rad(coor2)
+                if is_enough and save_folder is not None:
+                    data.to_csv(save_folder+indicativo+".csv")
+            else:
+                return estaciones
 
-    dist = radius * np.arccos(np.cos(coor1[0] - coor2[0]) -
-                              np.cos(coor1[0]) *
-                              np.cos(coor2[0]) *
-                              (1 - np.cos(coor1[1] - coor2[1])))
+        elif any(x in kwargs.keys() for x in ("latitud",
+                                              "longitud",
+                                              "n_cercanas")):
+            estaciones = self.estaciones_cerca(kwargs["latitud"],
+                                               kwargs["longitud"],
+                                               kwargs["n_cercanas"])
 
-    return dist
+            for indicativo in estaciones.indicativo:
+                data = self.clima_diaria(indicativo, fecha_ini, fecha_fin)
+                if data.empty:
+                    continue
 
+                is_enough = self._have_enough(data_frame=data,
+                                              start_date=fecha_ini,
+                                              end_date=fecha_fin,
+                                              threshold=umbral,
+                                              columns=variables)
 
-def update_sites(old_dataframe, new_dataframe):
-    """ Docstring """
+                if is_enough:
+                    if save_folder is not None:
+                        data.to_csv(save_folder+indicativo+".csv")
+                    return estaciones[estaciones.indicativo == indicativo]
+            else:
+                return False
 
-    not_included = new_dataframe[~new_dataframe.isin(old_dataframe)].dropna()
+    @staticmethod
+    def _have_enough(data_frame, start_date, end_date,
+                     threshold=0.75, columns='all'):
+        """ Docstring """
 
-    return pd.concat([old_dataframe, get_site_address(not_included)])
+        if columns == 'all':
+            columns = data_frame.columns
 
+        duration = (end_date - start_date).days + 1  # (a, b] => [a, b]
+        amount_data = data_frame[columns].notna().sum() / duration
 
-def get_address(lat, long):
-    """ Obtain the district, city, province and Autonomus community
-        of a coordiante.
+        return (amount_data >= threshold).all()
 
-        @params:
-            lat: float of the latitude coordinate in degrees
-            long: float of the longitude coordinate in degrees
-        @return:
-            pandas DataFrame with the latitude, longitude, district, city,
-            province and autonomus community
-    """
+    @staticmethod
+    def _read_sites_database():
+        """ Docstring """
 
-    address_data = gc.arcgis([lat, long],
-                             method='reverse').json["raw"]["address"]
+        zenodo_url = ("https://zenodo.org/api/records/" +
+                    __dataset_doi__.split(".")[-1])
+        req = requests.get(zenodo_url,
+                        {'accept': 'application/json'})
 
-    address_data.update({"latitude": lat,
-                         "longitude": long})
+        if not req.ok:
+            return False
 
-    return pd.DataFrame(pd.Series(address_data)).T[["District",
-                                                    "City",
-                                                    "Subregion",
-                                                    "Region",
-                                                    "CountryCode",
-                                                    "latitude",
-                                                    "longitude"]]
+        for file in req.json()["files"]:
+            if file["type"] == "pkl":
+                myfile = requests.get(file["links"]["self"])
+                break
 
+        with tmpfl.NamedTemporaryFile() as tmp_fl:
+            tmp_fl.write(myfile.content)
+            return pd.read_pickle(tmp_fl.name)
 
-def get_site_address(dataframe):
-    """ Obtain the district, city, province and Autonomus community
-        of a coordiante.
+    @staticmethod
+    def _split_date(start, end, min_years=4):
+        """
+        Check if interval between start_dt and end_dt is bigger than 5
+        years, and if so, divide it in interval of less than 5 years.
 
-        @params:
-            dataframe: pandas DataFrame with latitude and longitude coordinates
-            as columns.
-        @return:
-            pandas DataFrame with the latitude, longitude, district, city,
-            province and autonomus community
-    """
+        :param start: beginning date of interval
+        :param end: ending date of interval
 
-    rows_sites = [get_address(x["latitude"],
-                              x["longitude"]
-                              ) for i, x in dataframe.iterrows()]
+        :returns: list of tuplas with inteval of less than 5 years between
+            start date and end date
+        """
 
-    addresses = pd.concat(rows_sites)
+        date_format = "%Y-%m-%dT%H:%M:%SUTC"
+        min_years_delta = relativedelta(years=min_years)
 
-    return dataframe.merge(addresses,
-                           on=["latitude", "longitude"],
-                           how='left'
-                           ).drop_duplicates()
+        n_delta = relativedelta(end, start).years // min_years + 1
 
+        interval_dates = [start+(i*min_years_delta) for i in range(0, n_delta)]
+        interval_dates += [end]
 
-def _read_sites_database():
-    """ Docstring """
+        params = [{"fechaIniStr": interval_dates[j].strftime(date_format),
+                "fechaFinStr": interval_dates[j+1].strftime(date_format)
+                } for j in range(0, n_delta)]
 
-    zenodo_url = ("https://zenodo.org/api/records/" +
-                  __dataset_doi__.split(".")[-1])
-    req = requests.get(zenodo_url,
-                       {'accept': 'application/json'})
+        return params
 
-    if not req.ok:
-        return False
+    @staticmethod
+    def _coordinates(coordinate):
+        """
+        Convert AEMET_API longitude or latitude angles in degrees, minutes and
+        seconds into float number in degrees
 
-    for file in req.json()["files"]:
-        if file["type"] == "pkl":
-            myfile = requests.get(file["links"]["self"])
-            break
+        E -> +       |    W -> -
+        N -> +       |    S -> -
 
-    with tmpfl.NamedTemporaryFile() as tmp_fl:
-        tmp_fl.write(myfile.content)
-        return pd.read_pickle(tmp_fl.name)
+        :param coordinate: longitude or latitude angle
+            e.g.: 425432N => +42º54'32"
+        :returns: coordinate in float degrees. e.g.: 42.9089º
+        """
 
+        signo = {"E": 1, "W": -1, "N": 1, "S": -1}
 
-def _split_date(start, end, min_years=4):
-    """
-    Check if interval between start_dt and end_dt is bigger than 5
-    years, and if so, divide it in interval of less than 5 years.
+        orientation = coordinate[-1]
+        grados = float(coordinate[:2])
+        minutes = float(coordinate[2:4]) / 60
+        seconds = float(coordinate[4:6]) / 3600
 
-    :param start: beginning date of interval
-    :param end: ending date of interval
+        return signo[orientation]*(grados+minutes+seconds)
 
-    :returns: list of tuplas with inteval of less than 5 years between
-        start date and end date
-    """
+    @staticmethod
+    def _columns_dtypes(aemet_dataframe):
+        """ Docstring """
 
-    date_format = "%Y-%m-%dT%H:%M:%SUTC"
-    min_years_delta = relativedelta(years=min_years)
+        for col in aemet_dataframe.columns:
+            if "hora" in col and aemet_dataframe.dtypes[col] == 'object':
+                aemet_dataframe[col] = pd.to_numeric(
+                    aemet_dataframe[col].str.split(":").str[0])
 
-    n_delta = relativedelta(end, start).years // min_years + 1
+        return aemet_dataframe.astype({'fecha': 'datetime64',
+                                    'indicativo': 'str'})
 
-    interval_dates = [start+(i*min_years_delta) for i in range(0, n_delta)]
-    interval_dates += [end]
+    @staticmethod
+    def _decimal_notation(dataframe, notation=","):
+        """
+        Replace coma '0,0' decimals to dot '0.0'
 
-    params = [{"fechaIniStr": interval_dates[j].strftime(date_format),
-               "fechaFinStr": interval_dates[j+1].strftime(date_format)
-               } for j in range(0, n_delta)]
+        :param dataframe: pandas DataFrame with decimals in original notation
+        :param notation: original notation. Default: ','
 
-    return params
+        :returns: pandas DataFrame with float decimal with dot notation
+        """
 
+        tmp_fl = tmpfl.NamedTemporaryFile().name
 
-def _coordinates(coordinate):
-    """
-    Convert AEMET_API longitude or latitude angles in degrees, minutes and
-    seconds into float number in degrees
+        dataframe.to_csv(tmp_fl, sep=";", index=False)
 
-    E -> +       |    W -> -
-    N -> +       |    S -> -
-
-    :param coordinate: longitude or latitude angle
-        e.g.: 425432N => +42º54'32"
-    :returns: coordinate in float degrees. e.g.: 42.9089º
-    """
-
-    signo = {"E": 1, "W": -1, "N": 1, "S": -1}
-
-    orientation = coordinate[-1]
-    grados = float(coordinate[:2])
-    minutes = float(coordinate[2:4]) / 60
-    seconds = float(coordinate[4:6]) / 3600
-
-    return signo[orientation]*(grados+minutes+seconds)
-
-
-def _columns_dtypes(aemet_dataframe):
-    """ Docstring """
-
-    for col in aemet_dataframe.columns:
-        if "hora" in col and aemet_dataframe.dtypes[col] == 'object':
-            aemet_dataframe[col] = pd.to_numeric(
-                aemet_dataframe[col].str.split(":").str[0])
-
-    return aemet_dataframe.astype({'fecha': 'datetime64',
-                                   'indicativo': 'str'})
-
-
-def _decimal_notation(dataframe, notation=","):
-    """
-    Replace coma '0,0' decimals to dot '0.0'
-
-    :param dataframe: pandas DataFrame with decimals in original notation
-    :param notation: original notation. Default: ','
-
-    :returns: pandas DataFrame with float decimal with dot notation
-    """
-
-    tmp_fl = tmpfl.NamedTemporaryFile().name
-
-    dataframe.to_csv(tmp_fl, sep=";", index=False)
-
-    return pd.read_csv(tmp_fl, sep=";", decimal=notation)
+        return pd.read_csv(tmp_fl, sep=";", decimal=notation)

@@ -35,9 +35,10 @@ class _AemetApiUse():
         if response.ok:
             if response.json()["estado"] == 200:
                 return self._request_data(response.json())
-            # elif response.ok and response.json()["estado"] == 401:
-            # elif response.ok and response.json()["estado"] == 404:
-            # elif response.ok and response.json()["estado"] == 429:
+            if response.ok and response.json()["estado"] == 404:
+                return {}, {}
+            # if response.ok and response.json()["estado"] == 401:
+            # if response.ok and response.json()["estado"] == 429:
 
             return response.json(), {}
 
