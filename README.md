@@ -1,5 +1,4 @@
 # pyAEMET
----
 
 pyaemet es una librería para python desarrollada para la descarga de los valores
 climatologicos diarios de la AEMET a partir de su API OpenData. La librería
@@ -16,7 +15,6 @@ $ pip install ./
 
 
 ## Uso de la librería
----
 Para poder usar la librería es necesario disponer de una APIkey de OpenData
 AEMET que se puede obtener en este
 [link](https://opendata.aemet.es/centrodedescargas/obtencionAPIKey). A partir de
@@ -86,7 +84,6 @@ AemetClima(apikey).clima_diaria(estacion,
 ```
 
 ## Referencias
----
 La información que recoge y utiliza esta librería es propiedad de la Agencia
 Estatal de Meteorología disponible mediante su API REST [AEMET
 OpenData](https://opendata.aemet.es/centrodedescargas/AEMETApi?).
