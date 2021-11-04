@@ -56,7 +56,6 @@ class AemetClima():
                "inventarioestaciones/todasestaciones/")
 
         aemet_st, aemet_metadata = self._aemet_api.request_info(url=url)
-
         aemet_st = pd.DataFrame.from_dict(aemet_st) \
                                .astype({"altitud": "float64"}) \
                                .rename(columns={"provincia": "provinciaAemet"})
@@ -219,9 +218,9 @@ class AemetClima():
         elif any(x in kwargs.keys() for x in ("latitud",
                                               "longitud",
                                               "n_cercanas")):
-            estaciones = self.estaciones_cerca(kwargs["latitud"],
-                                               kwargs["longitud"],
-                                               kwargs["n_cercanas"])
+            estaciones = self.estaciones_cerca(latitud=kwargs["latitud"],
+                                               longitud=kwargs["longitud"],
+                                               n_cercanas=kwargs["n_cercanas"])
 
             for indicativo in estaciones.indicativo:
                 data = self.clima_diaria(indicativo, fecha_ini, fecha_fin)
@@ -246,6 +245,8 @@ class AemetClima():
                      threshold=0.75, columns='all'):
         """ Docstring """
 
+        if any(col not in data_frame.columns for col in columns):
+            return False
         if columns == 'all':
             columns = data_frame.columns
 
