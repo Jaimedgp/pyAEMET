@@ -25,6 +25,7 @@ setuptools.setup(
         "numpy>=1.18.1",
         "pandas>=1.0.1",
         "requests>=2.7.0",
+        "geocoder>=1.38.1",
         #"python-dateutil>=2.7.0",
     ],
     #package_dir={"": "pyaemet"},
