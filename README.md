@@ -23,6 +23,8 @@ AEMET que se puede obtener en este
 esta clave se puede crear un objeto de la clase principal `AemetClima` que
 permitirá utilizar los métodos de la librería.
 
+Se puede consultar el ipython notebook `doc/ejemplo-uso.ipnb` con ejemplos de uso.
+
 ```python
 from pyaemet.apikey_file import apikey
 from pyaemet.valores_climatologicos import AemetClima
@@ -53,29 +55,16 @@ sus columnas. De esta manera se pueden filtrar las estaciones por ciudad,
 provincia o comunidad autónoma.
 
 ```python
-    AemetClima(apikey).estaciones_loc(nombre_columna=["lista de valores"])
+AemetClima(apikey).estaciones_loc(nombre_columna=["lista de valores"])
 ```
 
-```{.python .input  n=18}
-# estaciones disponibles en la provincia de Barcelona
-pontevedra = aemet.estaciones_loc(provincia=["Pontevedra"])
-```
+Por otro lado, el método `AemetClima.estaciones_cerca()` te permite obtener las `n_cercanas`
+estaciones de la AEMET más cercanas a una cierta localización definida por sus coordenadas
+latitud y longitud, junto con su distancia a la localización en km. Por defecto se devuelven
+las 3 estaciones más cercanas.
 
-```{.python .input  n=6}
-# Estaciones disponibles en la comunidad de Madrid
-madrid = aemet.estaciones_loc(CA=["Comunidad de Madrid"])
-madrid.head()
-```
-
-Por otro lado, el método `AemetClima.estaciones_cerca(latitud, longitud,
-n_cercanas)` te permite obtener las `n_cercanas` estaciones de la AEMET más
-cercanas a una cierta localización definida por sus coordenadas latitud y
-longitud, junto con su distancia a la localización en km. Por defecto se
-devuelven las 3 estaciones más cercanas.
-
-```{.python .input  n=8}
-cerca = aemet.estaciones_cerca(latitud=43.47, longitud=-3.798, n_cercanas=5)
-cerca.head()
+```python
+AemetClima(apikey).estaciones_cerca(latitud, longitud, n_cercanas=3)
 ```
 
 ### Descarga Valores Climatológicos
@@ -94,29 +83,6 @@ AemetClima(apikey).clima_diaria(estacion,
                                 fecha_ini=datetime.date(),
                                 fecha_fin=datetime.date.today()
                                 )
-```
-
-```{.python .input  n=11}
-from datetime import date
-
-data_aranjuez = aemet.clima_diaria(estacion="3100B",
-                                   fecha_ini=date(2015, 1, 1),
-                                   fecha_fin=date(2021, 5, 1)
-                                   )
-data_aranjuez.head()
-```
-
-```{.python .input  n=16}
-# Datos de la provincia de Tarragona
-# Se pasa el pandas.DataFrame obtenido anteriormente
-data_pontevedra = aemet.clima_diaria(estacion=pontevedra,
-                                    fecha_ini=date(2015, 1, 1),
-                                    fecha_fin=date(2021, 5, 1)
-                                    )
-```
-
-```{.python .input  n=17}
-data_pontevedra.groupby("indicativo").plot(x="fecha", y="tmin")
 ```
 
 ## Referencias
