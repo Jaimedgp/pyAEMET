@@ -7,6 +7,7 @@
 """
 
 import re
+import time
 import requests
 
 
@@ -33,12 +34,20 @@ class _AemetApiUse():
                                     )
 
         if response.ok:
+            while response.json()["estado"] == 429:
+                time.sleep(50)
+                response = requests.request("GET",
+                                            self.main_url + url,
+                                            headers=self._headers,
+                                            params=self._param
+                                            )
+
             if response.json()["estado"] == 200:
                 return self._request_data(response.json())
-            if response.ok and response.json()["estado"] == 404:
+            if response.json()["estado"] == 404:
                 return {}, {}
-            # if response.ok and response.json()["estado"] == 401:
-            # if response.ok and response.json()["estado"] == 429:
+            if response.json()["estado"] == 401:
+                return {}, {}
 
             return response.json(), {}
 
