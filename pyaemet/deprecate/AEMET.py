@@ -28,9 +28,9 @@ class AEMETAPI():
         self.api = {"api_key": apikey}
         self.headers = {'cache-control': "no-cache"}
 
-        self.sites = None
+        self.sites = self.get_sites()
 
-    def request_data(self, url):
+    def _request_data(self, url):
         """ Docstring """
 
         # PONER AQUI EL TRATAMIENTO DEL ERROR AL REALIZAR DEMASIADAS CONSULTAS
@@ -42,22 +42,30 @@ class AEMETAPI():
                                    params=self.api).json()
 
         if request['estado'] == 200:
-            return requests.request("GET",
+            data = requests.request("GET",
                                     request['datos'],
                                     headers=self.headers,
                                     params=self.api).json()
-        # if request['estado'] == 404:
-        print(request['estado'], request['descripcion'])
-        return False
+            metadata = requests.request("GET",
+                                        request['metadatos'],
+                                        headers=self.headers,
+                                        params=self.api).json()
+        else:
+            data, metadata = {}, {}
+
+        return_values = pd.DataFrame.from_dict(data)
+        return_values.attrs = {"estado": request['estado'],
+                               "descripcion": request["descripcion"],
+                               "metadatos": metadata}
+
+        return return_values
 
     def get_sites(self):
         """ Obtain all AEMET sites information """
 
         self.sites = pd.read_pickle("~/Repositories/pyAEMET/doc/sites.pkl")
 
-        request = self.request_data("inventarioestaciones/todasestaciones/")
-
-        new_sites = pd.DataFrame.from_dict(request)
+        new_sites = self._request_data("inventarioestaciones/todasestaciones/")
 
         if new_sites["indicativo"].isin(self.sites["indicativo"]).all():
             return self.sites
@@ -186,7 +194,7 @@ class AEMETAPI():
         for st in sites:
             for i, (j, k) in enumerate(split_dt):
 
-                to_obtain = self.request_data(
+                to_obtain = self._request_data(
                     "diarios/datos/" +
                     "fechaini/" + str(j) +
                     "T00:00:00UTC/" +
@@ -195,13 +203,12 @@ class AEMETAPI():
                     "estacion/" + st + "/")
 
                 if not isinstance(to_obtain, bool):
-                    type(to_obtain)
-                    data += to_obtain
+                    data += [to_obtain]
                 else:
                     print(to_obtain)
 
-        data_pd = pd.DataFrame.from_dict(data).replace({"Ip": "0,05",
-                                                        "Varias": "-2:00"})
+
+        data_pd = pd.concat(data).replace({"Ip": "0,05", "Varias": "-2:00"})
 
         return decimal_notation(data_pd, notation=",").drop(["nombre",
                                                              "provincia",

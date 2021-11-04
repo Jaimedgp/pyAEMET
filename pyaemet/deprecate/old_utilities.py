@@ -146,11 +146,12 @@ def get_site_address(dataframe):
                               x["longitude"]
                               ) for i, x in dataframe.iterrows()]
 
-    addresses = pd.concat(rows_sites).rename(columns={"Latitude": "latitude",
-                                                      "Longitude": "longitude"}
-                                             )
+    addresses = pd.concat(rows_sites)
 
-    return dataframe.merge(addresses, on=["latitude", "longitude"])
+    return dataframe.merge(addresses,
+                           on=["latitude", "longitude"],
+                           how='left'
+                           ).drop_duplicates()
 
 
 def horavariable_type(row):
