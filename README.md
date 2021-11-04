@@ -24,7 +24,6 @@ permitirá utilizar los métodos de la librería.
 Se puede consultar el ipython notebook `doc/ejemplo-uso.ipnb` con ejemplos de uso.
 
 ```python
-from pyaemet.apikey_file import apikey
 from pyaemet.valores_climatologicos import AemetClima
 
 aemet = AemetClima(apikey=apikey)
@@ -63,6 +62,42 @@ las 3 estaciones más cercanas.
 
 ```python
 AemetClima(apikey).estaciones_cerca(latitud, longitud, n_cercanas=3)
+```
+
+Por otro lado, se ha añadido el método `AemetClima.estaciones_curacion` para facilitar el
+curado de los datos. Este método permite obtener las estaciones que cumplan el requisito de
+que tengan al menos un porcentaje determinado `umbral` de los datos de ciertas variables
+`variables` disponibles. El método puede comportarse de dos maneras distintas en función de
+los argumentos que se le pasen.
+
+El método `AemetClima.estaciones_curacion` permite pasarle la información de las estaciones
+de las cuales se quiere obtener información sobre la cantidad de datos disponibles. De esta
+forma, si se le pase el argumento `estaciones` mediante su `indicativo` en forma de `string`
+o lista de `strings` o pasando directamente un pandas.DataFrame devuelto por los métodos
+vistos anteriormente con la información de las estaciones el método añadirá la columna
+`suficientesDatos` booleana según si la estación cumple o no la condición.
+
+```python
+AemetClima(apikey).estaciones_curacion(estacion,
+                                       fecha_ini=datetime.date(),
+                                       fecha_fin=datetime.date.now(),
+                                       umbral=0.75,  # por defecto se toma el 75%
+                                       variables=columnas,
+                                       save_folder="directorio/guardar/los/datos/")
+```
+
+Por otro lado, se puede utilizar esta funcion para obtener la estación más cercana a una
+localización que cumpla el requisito de los datos mínimos. Esta función obtiene la
+información de las estaciones llamando a la función
+`AemetClima.estaciones_cerca(latitud, longitud, n_cercanas)`.
+
+```python
+AemetClima(apikey).estaciones_curacion(latitud, longitud, n_cercanas,
+                                       fecha_ini=datetime.date(),
+                                       fecha_fin=datetime.date.now(),
+                                       umbral=0.75,  # por defecto se toma el 75%
+                                       variables=columnas,
+                                       save_folder="directorio/guardar/los/datos/")
 ```
 
 ### Descarga Valores Climatológicos
