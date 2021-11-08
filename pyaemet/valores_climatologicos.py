@@ -198,6 +198,7 @@ class AemetClima():
                         "informacion\n de la estacion")
                     return False
 
+            estaciones["suficientesDatos"] = False
             for indicativo in estaciones.indicativo:
                 data = self.clima_diaria(indicativo, fecha_ini, fecha_fin)
                 if data.empty:
