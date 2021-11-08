@@ -9,7 +9,7 @@ climatológicos y cuyo uso se detalla a continuacion.
 
 ``` bash
 
-$ pip install pyAEMET-Jaimedgp
+$ pip install pyaemet
 
 ```
 

@@ -1,6 +1,6 @@
 """ Docstring """
 
-__author__ = "Jaime Diez Gonzalez-Pardo"
+__author__ = "Jaimedgp"
 __author_orcid__ = "0000-0001-7268-9933"
 __date__ = "November, 2021"
 
