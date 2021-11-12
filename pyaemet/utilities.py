@@ -47,6 +47,9 @@ def update_sites(old_dataframe, new_dataframe):
 
     not_included = new_dataframe[~new_dataframe.isin(old_dataframe)].dropna()
 
+    if not_included.empty:
+        return old_dataframe
+
     return pd.concat([old_dataframe, get_site_address(not_included)])
 
 

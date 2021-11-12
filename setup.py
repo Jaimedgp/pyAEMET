@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="pyaemet",
-    version="1.0.1",
+    version="1.0.2",
     author="Jaimedgp",
     author_email="jaime.diez.gp@gmail.com",
     description="Python package to interact with the AEMET API",

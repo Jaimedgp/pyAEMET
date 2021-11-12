@@ -5,7 +5,7 @@ __author_orcid__ = "0000-0001-7268-9933"
 __date__ = "November, 2021"
 
 __license__ = "GPL-3.0 License"
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 __maintainer__ = "Jaimedgp"
 __email__ = "jaime.diez.gp@gmail.com"
 
