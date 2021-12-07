@@ -11,5 +11,3 @@ __email__ = "jaime.diez.gp@gmail.com"
 
 __repository__ = "https://github.com/Jaimedgp/pyAEMET"
 __dataset_doi__ = "10.5281/zenodo.5642979"
-
-from pyaemet.valores_climatologicos import AemetClima
