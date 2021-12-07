@@ -66,6 +66,13 @@ class SitesDataFrame(pandas.DataFrame):
             raise AttributeError("Each site must be identify by a code 'site'"
                                  + " and its name 'name'.")
 
+    def copy(self, deep=True):
+        """ Copy object """
+
+        return SitesDataFrame(data=super().copy(deep),
+                              library=self.library,
+                              metadata=self.metadata)
+
     @property
     def map(self):
         """
@@ -114,7 +121,7 @@ class SitesDataFrame(pandas.DataFrame):
             self,
             latitude: float,
             longitude: float,
-            n_near: int = 10,
+            n_near: int = 100,
             max_distance: float = 6237.0,
     ):
         """
