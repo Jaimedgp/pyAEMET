@@ -22,6 +22,7 @@ class SitesDataFrame(DataFrame):
             columns=None,
             dtype=None,
             copy=None,
+            library: str = None,
             metadata: dict = None,
     ):
 
@@ -35,6 +36,7 @@ class SitesDataFrame(DataFrame):
 
         if metadata is None:
             metadata = {}
+        object.__setattr__(self, "library", library)
         object.__setattr__(self, "metadata", metadata)
 
     def plot_map(self):
@@ -68,10 +70,10 @@ class SitesDataFrame(DataFrame):
         """
         """
 
-        if any(type(x) != list for x in kwargs.values()):
+        if any(not isinstance(x, list) for x in kwargs.values()):
             raise(TypeError("only list-like objects are allowed to be passed" +
                             " to filter_in(), you passed a [str]"))
-        if any(x not in self.columns for x in kwargs.keys()):
+        if any(x not in self.columns for x in kwargs):
             raise(KeyError("The keys passed to filter_in() does not match " +
                            "with SitesDataFrame columns"))
 
@@ -134,11 +136,11 @@ class SitesDataFrame(DataFrame):
         new_data = self.copy()
 
         new_data.__setitem__(key="distance", value=coor1.apply(
-                lambda row: radius *
-                np.arccos(np.cos(row["latitude"] - latitude) -
-                          np.cos(row["latitude"]) * np.cos(latitude) *
-                          (1 - np.cos(row["longitude"] - longitude))
-                          ), axis=1))
+            lambda row: radius *
+            np.arccos(np.cos(row["latitude"] - latitude) -
+                      np.cos(row["latitude"]) * np.cos(latitude) *
+                      (1 - np.cos(row["longitude"] - longitude))
+                      ), axis=1))
 
         return new_data
 
@@ -155,6 +157,7 @@ class NearSitesDataFrame(SitesDataFrame):
             columns=None,
             dtype=None,
             copy=None,
+            library=None,
             metadata=None,
     ):
         """
@@ -166,6 +169,7 @@ class NearSitesDataFrame(SitesDataFrame):
             columns=columns,
             dtype=dtype,
             copy=copy,
+            library=library,
             metadata=metadata,
         )
 
@@ -173,7 +177,7 @@ class NearSitesDataFrame(SitesDataFrame):
                                                   "longitude": ref_point[1]
                                                   }
                               })
-        # object.__setattr__(self, "map", self.plot_map())
+        object.__setattr__(self, "map", self.plot_map())
 
     def plot_map(self):
         """
