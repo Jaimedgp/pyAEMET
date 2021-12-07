@@ -11,6 +11,12 @@ from pandas import DataFrame
 
 class ObservationsDataFrame(DataFrame):
     """
+    NEEDS TO HAVE THE FOLLOWING COLUMNS:
+
+        site (CODE)
+        date (DATE/DATETIME OF THE OBSERVATION)
+
+    THE VARIABLES MUST BE PASS AS COLUMNS
 
     """
 

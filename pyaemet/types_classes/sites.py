@@ -4,16 +4,22 @@ SitesDataFrame
 
 """
 
-from pandas import DataFrame
-
+import pandas
 import folium
 import numpy as np
 
 
-class SitesDataFrame(DataFrame):
+class SitesDataFrame(pandas.DataFrame):
+    """
+    NEEDS TO HAVE THE FOLLOWING COLUMNS:
+
+        site (CODE),
+        name (NAME OF THE STATION),
+        latitude,
+        longitude
     """
 
-    """
+    # pandas: disable=W0223
 
     def __init__(
             self,
@@ -34,12 +40,34 @@ class SitesDataFrame(DataFrame):
             copy=copy
         )
 
+        self._validate(self)
+
         if metadata is None:
             metadata = {}
         object.__setattr__(self, "library", library)
         object.__setattr__(self, "metadata", metadata)
 
-    def plot_map(self):
+    @staticmethod
+    def _validate(obj):
+        """
+        NEEDS TO HAVE THE FOLLOWING COLUMNS:
+
+            site (CODE),
+            name (NAME OF THE STATION),
+            latitude,
+            longitude
+        """
+
+        # verify there is a column latitude and a column longitude
+        if "latitude" not in obj.columns or "longitude" not in obj.columns:
+            raise AttributeError("Must have 'latitude' and 'longitude'.")
+        # verify there is a column site and a column name
+        if "site" not in obj.columns or "name" not in obj.columns:
+            raise AttributeError("Each site must be identify by a code 'site'"
+                                 + " and its name 'name'.")
+
+    @property
+    def map(self):
         """
         plot map with the sites location
         """
@@ -63,7 +91,6 @@ class SitesDataFrame(DataFrame):
                           popup=folium.Popup(popup, max_width=480),
                           tooltip="Click me!").add_to(mapa)
 
-        object.__setattr__(self, "map", mapa)
         return mapa
 
     def filter_in(self, **kwargs):
@@ -129,8 +156,8 @@ class SitesDataFrame(DataFrame):
             (Due to radius is given in km)
         """
 
-        coor1 = DataFrame(np.deg2rad(self.__getitem__(["latitude",
-                                                       "longitude"])))
+        coor1 = pandas.DataFrame(np.deg2rad(self.__getitem__(["latitude",
+                                                              "longitude"])))
         latitude, longitude = np.deg2rad(latitude), np.deg2rad(longitude)
 
         new_data = self.copy()
@@ -145,8 +172,15 @@ class SitesDataFrame(DataFrame):
         return new_data
 
 
-class NearSitesDataFrame(SitesDataFrame):
+class NearSitesDataFrame(SitesDataFrame, pandas.DataFrame):
     """
+    NEEDS TO HAVE THE FOLLOWING COLUMNS:
+
+        site (CODE),
+        name (NAME OF THE STATION),
+        latitude,
+        longitude,
+        distance (TO THE REFERENCE POINT)
     """
 
     def __init__(
@@ -177,9 +211,31 @@ class NearSitesDataFrame(SitesDataFrame):
                                                   "longitude": ref_point[1]
                                                   }
                               })
-        object.__setattr__(self, "map", self.plot_map())
 
-    def plot_map(self):
+    @staticmethod
+    def _validate(obj):
+        """
+        NEEDS TO HAVE THE FOLLOWING COLUMNS:
+
+            site (CODE),
+            name (NAME OF THE STATION),
+            latitude,
+            longitude
+        """
+
+        # verify there is a column latitude and a column longitude
+        if "latitude" not in obj.columns or "longitude" not in obj.columns:
+            raise AttributeError("Must have 'latitude' and 'longitude'.")
+        # verify there is a column site and a column name
+        if "site" not in obj.columns or "name" not in obj.columns:
+            raise AttributeError("Each site must be identify by a code 'site'"
+                                 + " and its name 'name'.")
+        if "distance" not in obj.columns:
+            raise AttributeError("NearSitesDataFrame must include the"
+                                 + " 'distance' column")
+
+    @property
+    def map(self):
         """
         plot map with the sites location
         """
