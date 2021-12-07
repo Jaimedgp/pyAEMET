@@ -31,6 +31,8 @@ setuptools.setup(
         "python-dateutil",
     ],
     packages=setuptools.find_packages(include=['pyaemet']),
+    include_package_data=True,
+    package_data={'pyaemet': ['data/*.*']},
     python_requires=">=3.6",
     zip_safe=False,
     setup_requires=['pytest-runner'],
