@@ -4,6 +4,9 @@ SitesDataFrame
 
 """
 
+import os
+import json
+
 import pandas
 import folium
 import numpy as np
@@ -66,6 +69,45 @@ class SitesDataFrame(pandas.DataFrame):
             raise AttributeError("Each site must be identify by a code 'site'"
                                  + " and its name 'name'.")
 
+    @staticmethod
+    def open_from(
+            data_fl: str = None,
+            metadata_fl: str = None,
+            folder_name: str = None
+    ):
+        """
+        """
+
+        if data_fl is None:
+            if folder_name is None:
+                raise KeyError("Not correct file path")
+            data_fl = folder_name + "data.pkl"
+        if metadata_fl is None:
+            if folder_name is None:
+                raise KeyError("Not correct file path")
+            metadata_fl = folder_name + "metadata.json"
+
+        return SitesDataFrame(
+            data=pandas.read_csv(data_fl),
+            library="pyaemet",
+            metadata=json.load(metadata_fl)
+            )
+
+    def save(self, folder_name: str, extension: str = 'pickle'):
+        """
+        """
+
+        if not os.path.exists(folder_name):
+            os.makedirs(folder_name)
+
+        if extension == 'pickle':
+            self.to_pickle(folder_name+"data.pkl")
+        elif extension == 'csv':
+            self.to_csv(folder_name+"data.csv")
+
+        with open(folder_name+"metadata.json") as file:
+            json.dump(self.metadata, file, indent=4)
+
     def copy(self, deep=True):
         """ Copy object """
 
@@ -92,7 +134,10 @@ class SitesDataFrame(pandas.DataFrame):
         folium.LayerControl().add_to(mapa)
 
         for i in self.index:
-            popup = "<strong>Name:</strong> %s" % (self._get_value(i, "name"))
+            popup = ("<strong>Site:</strong> %s<br>"
+                     % (self._get_value(i, "site")) +
+                     "<strong>Name:</strong> %s"
+                     % (self._get_value(i, "name")))
             folium.Marker([self._get_value(i, "latitude"),
                            self._get_value(i, "longitude")],
                           popup=folium.Popup(popup, max_width=480),
@@ -112,8 +157,8 @@ class SitesDataFrame(pandas.DataFrame):
                            "with SitesDataFrame columns"))
 
         sites = self.copy()
-        for ky, vl in kwargs.items():
-            sites = sites.__getitem__(sites.__getitem__(ky).isin(vl)).dropna()
+        for k, v in kwargs.items():
+            sites = sites.__getitem__(sites.__getitem__(k).isin(v)).dropna()
 
         return SitesDataFrame(data=sites, metadata=self.metadata)
 
@@ -179,7 +224,7 @@ class SitesDataFrame(pandas.DataFrame):
         return new_data
 
 
-class NearSitesDataFrame(SitesDataFrame, pandas.DataFrame):
+class NearSitesDataFrame(SitesDataFrame):
     """
     NEEDS TO HAVE THE FOLLOWING COLUMNS:
 
@@ -260,7 +305,9 @@ class NearSitesDataFrame(SitesDataFrame, pandas.DataFrame):
         folium.LayerControl().add_to(mapa)
 
         for i in self.index:
-            popup = ("<strong>Name:</strong> %s<br>"
+            popup = ("<strong>Site:</strong> %s<br>"
+                     % (self._get_value(i, "site")) +
+                     "<strong>Name:</strong> %s<br>"
                      % (self._get_value(i, "name")) +
                      "<strong>Distance:</strong> %.2f"
                      % (self._get_value(i, "distance")))
