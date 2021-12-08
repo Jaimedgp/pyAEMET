@@ -7,14 +7,12 @@ Python module to operate with AEMET OpenData API REST
 :author Jaimedgp
 """
 
-import json
-import pandas as pd
 # from copy import copy
-
-from pyaemet.types_classes.sites import SitesDataFrame
-# from pyaemet.types_classes.observations import ObservationsDataFrame
-
 from pkg_resources import resource_stream
+
+from types_classes.sites import SitesDataFrame
+from aemet_request import _AemetApiRequest
+# from pyaemet.types_classes.observations import ObservationsDataFrame
 
 
 class AemetClima():
@@ -23,34 +21,8 @@ class AemetClima():
     def __init__(self, apikey):
         """ Get the needed API key"""
 
-        self._aemet_api = {"apikey": apikey}
+        self._aemet_request = _AemetApiRequest(apikey=apikey)
         self.aemet_sites = self._saved_sites_info()
-
-    @staticmethod
-    def open_sites(
-            data_fl: str = None,
-            metadata_fl: str = None,
-            folder_name: str = None
-    ):
-        """
-        """
-
-        if data_fl is None:
-            if folder_name is None:
-                raise(KeyError("Not correct file path"))
-            else:
-                data_fl = folder_name + "data.pkl"
-        if metadata_fl is None:
-            if folder_name is None:
-                raise(KeyError("Not correct file path"))
-            else:
-                metadata_fl = folder_name + "metadata.json"
-
-        return SitesDataFrame(
-            data=pd.read_pickle(data_fl),
-            library="pyaemet",
-            metadata=json.load(metadata_fl)
-            )
 
     @staticmethod
     def _saved_sites_info():
@@ -59,10 +31,11 @@ class AemetClima():
 
         folder = "data/sites/"
 
-        data_fl = resource_stream(__name__, folder+'data.pkl')
+        data_fl = resource_stream(__name__, folder+'data.csv')
         metadata_fl = resource_stream(__name__, folder+'metadata.json')
 
-        return AemetClima.open_sites(data_fl=data_fl, metadata_fl=metadata_fl)
+        return SitesDataFrame.open_from(data_fl=data_fl,
+                                        metadata_fl=metadata_fl)
 
     def sites_info(self, update=True):
         """
@@ -72,7 +45,7 @@ class AemetClima():
         if not update:
             return self.aemet_sites.copy()
 
-        return None
+        return self._aemet_request.get_sites_info()
 
     def sites_in(
             self,
