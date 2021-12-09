@@ -105,7 +105,7 @@ class SitesDataFrame(pandas.DataFrame):
         elif extension == 'csv':
             self.to_csv(folder_name+"data.csv")
 
-        with open(folder_name+"metadata.json") as file:
+        with open(folder_name+"metadata.json", 'w') as file:
             json.dump(self.metadata, file, indent=4)
 
     def copy(self, deep=True):
@@ -121,6 +121,9 @@ class SitesDataFrame(pandas.DataFrame):
         plot map with the sites location
         """
 
+        if self.empty:
+            return folium.Map()
+
         index_lat, = np.where(self.columns == "latitude")[0]
         index_lon, = np.where(self.columns == "longitude")[0]
 
@@ -131,7 +134,6 @@ class SitesDataFrame(pandas.DataFrame):
                   np.mean([np.min(longitudes), np.max(longitudes)])]
 
         mapa = folium.Map(location=center, zoom_start=3)
-        folium.LayerControl().add_to(mapa)
 
         for i in self.index:
             popup = ("<strong>Site:</strong> %s<br>"

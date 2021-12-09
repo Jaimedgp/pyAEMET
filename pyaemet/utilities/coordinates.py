@@ -5,7 +5,8 @@ Utilities
 :author Jaimedgp
 """
 
-from pandas import Series
+from pandas import Series, DataFrame, concat
+from geocoder import arcgis
 
 
 def _coordinates(coordinate: str):
@@ -42,3 +43,44 @@ def transform_coordinates(
         sites = sites.apply(_coordinates)
 
     return sites
+
+
+def get_address(lat, long):
+    """
+    Obtain the district, city, province and Autonomus community
+    of a coordiante.
+
+    :param lat: float of the latitude coordinate in degrees
+    :param long: float of the longitude coordinate in degrees
+
+    :return: pandas DataFrame with the latitude, longitude, district, city,
+        province and autonomus community
+    """
+
+    address_data = arcgis([lat, long],
+                          method='reverse').json["raw"]["address"]
+
+    address_data.update({"latitude": lat,
+                         "longitude": long})
+
+    columns = ["District", "City",
+               "Subregion", "Region",
+               "latitude", "longitude"]
+
+    return Series({k: v for k, v in address_data.items() if k in columns})
+
+
+def get_site_address(row):
+    """
+    Obtain the district, city, province and Autonomus community of a
+    coordiante.
+
+    :params row: pandas Serie with latitude and longitude coordinates
+        as columns.
+    :return: pandas Serie with the latitude, longitude, district, city,
+        province and autonomus community
+    """
+
+    addresses = get_address(row["latitude"], row["longitude"])
+
+    return addresses

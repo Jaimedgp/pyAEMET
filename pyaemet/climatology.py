@@ -42,10 +42,13 @@ class AemetClima():
         Update Sites information from AEMET
         """
 
-        if not update:
-            return self.aemet_sites.copy()
+        if update:
+            new_sites = self._aemet_request.get_sites_info(old_dataframe=self.aemet_sites)
+            self.aemet_sites = new_sites
+        else:
+            self.aemet_sites = self._saved_sites_info()
 
-        return self._aemet_request.get_sites_info()
+        return self.aemet_sites.copy()
 
     def sites_in(
             self,
