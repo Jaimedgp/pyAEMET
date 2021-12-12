@@ -8,11 +8,15 @@ Python module to operate with AEMET OpenData API REST
 """
 
 # from copy import copy
+from datetime import date
+from dateutil.relativedelta import relativedelta
+from pandas import DataFrame, concat
 from pkg_resources import resource_stream
 
-from types_classes.sites import SitesDataFrame
+from types_classes.sites import SitesDataFrame, NearSitesDataFrame
+from types_classes.observations import ObservationsDataFrame
+
 from aemet_request import _AemetApiRequest
-# from pyaemet.types_classes.observations import ObservationsDataFrame
 
 
 class AemetClima():
@@ -37,14 +41,18 @@ class AemetClima():
         return SitesDataFrame.open_from(data_fl=data_fl,
                                         metadata_fl=metadata_fl)
 
-    def sites_info(self, update=True):
+    def sites_info(self, update=True) -> SitesDataFrame:
         """
         Update Sites information from AEMET
         """
 
         if update:
-            new_sites = self._aemet_request.get_sites_info(old_dataframe=self.aemet_sites)
-            self.aemet_sites = new_sites
+            new_sites, new_metadata = self._aemet_request \
+                                          .get_sites_info(
+                                                old_dataframe=self.aemet_sites)
+            self.aemet_sites = SitesDataFrame(data=new_sites,
+                                              library="pyaemet",
+                                              metadata=new_metadata)
         else:
             self.aemet_sites = self._saved_sites_info()
 
@@ -54,8 +62,7 @@ class AemetClima():
             self,
             update_first: bool = False,
             **kwargs,
-    ):
-
+    ) -> SitesDataFrame:
         """
         Return sites in
         """
@@ -75,8 +82,7 @@ class AemetClima():
             n_near: int = 100,
             max_distance: float = 6237.0,
             update_first: bool = False,
-    ):
-
+    ) -> NearSitesDataFrame:
         """
         Return sites in
         """
@@ -92,3 +98,60 @@ class AemetClima():
             longitude,
             n_near,
             max_distance)
+
+    def daily_clima(
+            self,
+            site,
+            start_dt: date,
+            end_dt: date = date.today()
+    ):
+        """
+        """
+
+        if isinstance(site, str):
+            pass
+        elif isinstance(site, list):
+            site = ",".join(site)
+        elif isinstance(site, DataFrame):
+            site = ",".join(site.site.drop_duplicates().to_list())
+
+        data_list = []
+        metadata = {}
+
+        # Split dates in intervals where: end_dt - start_dt < 5 years
+        splited_dates = self._split_date(start_dt, end_dt)
+
+        for start, end in splited_dates:
+            data, meta = self._aemet_request \
+                             .get_observations(fechaIniStr=start,
+                                               fechaFinStr=end,
+                                               idema=site)
+            data_list.append(data)
+            metadata.update(meta)
+
+        return ObservationsDataFrame(data=concat(data_list),
+                                     library="pyaemet",
+                                     metadata=metadata)
+
+    @staticmethod
+    def _split_date(start_dt, end_dt, min_years=4):
+        """
+        Check if interval between start_dt and end_dt is bigger than 5
+        years, and if so, divide it in interval of less than 5 years.
+
+        :param start: beginning date of interval
+        :param end: ending date of interval
+
+        :returns: list of tuplas with inteval of less than 5 years between
+            start date and end date
+        """
+
+        min_years_delta = relativedelta(years=min_years)
+        n_delta = relativedelta(end_dt, start_dt).years // min_years + 1
+
+        interval_dates = [start_dt+(i*min_years_delta)
+                          for i in range(0, n_delta)]
+        interval_dates += [end_dt]
+
+        return [(interval_dates[j], interval_dates[j+1])
+                for j in range(0, n_delta)]

@@ -1,5 +1,4 @@
-"""
-AEMET API MODULE
+""" AEMET API MODULE
 -----------------
 
 Python module to operate with AEMET OpenData API REST
@@ -7,13 +6,13 @@ Python module to operate with AEMET OpenData API REST
 :author Jaimedgp
 """
 
-from datetime import datetime
+from datetime import date, datetime
+
 import requests
 import pandas as pd
 
-from types_classes.sites import SitesDataFrame
 from utilities.coordinates import transform_coordinates, get_site_address
-
+from utilities.curation import update_fields, decimal_notation, convert_hours
 
 sites_translation = \
 {
@@ -39,6 +38,46 @@ sites_translation = \
                "dtype": "string"},
     "subregion_aemet": {"id": "provincia",
                         "dtype": "string"},
+}
+
+observations_translation = \
+{
+    "date": {"id": "fecha",
+             "dtype": "datetime64"},
+    "site": {"id": "indicativo",
+             "dtype": "string"},
+    "altitude": {"id": "altitud",
+                 "dtype": "float64"},
+    "temp_avg": {"id": "tmed",
+                 "dtype": "float64"},
+    "precipitation": {"id": "prec",
+                      "dtype": "float64"},
+    "temp_min": {"id": "tmin",
+                 "dtype": "float64"},
+    "temp_max": {"id": "tmax",
+                 "dtype": "float64"},
+    "hr_temp_min": {"id": "horatmin",
+                    "dtype": "object"},
+    "hr_temp_max": {"id": "horatmax",
+                    "dtype": "object"},
+    "wnd_dir": {"id": "dir",
+                "dtype": "float64"},
+    "wnd_spd": {"id": "velmedia",
+                "dtype": "float64"},
+    "wnd_gst": {"id": "racha",
+                "dtype": "float64"},
+    "hr_wnd_gst": {"id": "horaracha",
+                   "dtype": "object"},
+    "press_max": {"id": "presMax",
+                  "dtype": "float64"},
+    "hr_press_max": {"id": "horaPresMax",
+                     "dtype": "object"},
+    "press_min": {"id": "presMin",
+                  "dtype": "float64"},
+    "hr_press_min": {"id": "horaPresMin",
+                     "dtype": "object"},
+    "hr_sun": {"id": "sol",
+               "dtype": "float64"},
 }
 
 
@@ -105,8 +144,7 @@ class _AemetApiRequest():
                                         headers=self._headers)
 
         if not bool(data):
-            return SitesDataFrame(columns=sites_translation.keys(),
-                                  library="pyaemet", metadata=metadata)
+            return pd.DataFrame(columns=sites_translation.keys()), metadata
 
         data = pd.DataFrame(data) \
                  .rename(columns={v["id"]: k
@@ -130,23 +168,55 @@ class _AemetApiRequest():
 
         metadata = {k+"_aemet": v for k, v in metadata.items()}
         metadata["access_date"] = datetime.now().isoformat()
-        metadata["fields"] = self.update_fields(data,
-                                                metadata.pop("campos_aemet"))
+        metadata["fields"] = update_fields(data,
+                                           metadata.pop("campos_aemet"),
+                                           sites_translation)
 
-        return SitesDataFrame(data=data, library="pyaemet", metadata=metadata)
+        return data, metadata
 
-    @staticmethod
-    def update_fields(data, metadata):
-        """
-        """
+    def get_observations(
+            self,
+            fechaIniStr: date,
+            fechaFinStr: date,
+            idema: str
+    ):
+        """ Docstring """
 
-        new_metadata = sites_translation.copy()
+        params = {"fechaIniStr": fechaIniStr.strftime("%Y-%m-%dT%H:%M:%SUTC"),
+                  "fechaFinStr": fechaFinStr.strftime("%Y-%m-%dT%H:%M:%SUTC"),
+                  "idema": idema
+                  }
 
-        for k, v in new_metadata.items():
-            if k in data.columns:
-                for i in metadata:
-                    if i["id"] == v["id"]:
-                        v["aemet"] = {k: v for k, v in i.items() if k != "id"}
-                        break
+        data, metadata = _aemet_request(url=(self.main_url +
+                                             "valores/climatologicos/" +
+                                             "diarios/datos/fechaini/" +
+                                             "{fechaIniStr}/fechafin/" +
+                                             "{fechaFinStr}/estacion/" +
+                                             "{idema}"
+                                             ).format(**params),
+                                        params=self._params,
+                                        headers=self._headers)
 
-        return new_metadata
+        if not bool(data):
+            return (pd.DataFrame(columns=observations_translation.keys()),
+                    metadata)
+
+        data = pd.DataFrame(data) \
+                 .drop(["nombre", "provincia"], axis=1) \
+                 .rename(columns={v["id"]: k
+                                  for k, v in observations_translation.items()
+                                  }) \
+                 .replace({"Ip": "0,05", "Varias": "-1"}) \
+                 .apply(decimal_notation, axis=1)
+        data = data.astype({k: v["dtype"]
+                            for k, v in observations_translation.items()
+                            if k in data.columns}) \
+                   .apply(convert_hours)
+
+        metadata = {k+"_aemet": v for k, v in metadata.items()}
+        metadata["access_date"] = datetime.now().isoformat()
+        metadata["fields"] = update_fields(data,
+                                           metadata.pop("campos_aemet"),
+                                           observations_translation)
+
+        return data, metadata
