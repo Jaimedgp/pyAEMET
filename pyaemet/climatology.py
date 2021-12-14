@@ -29,7 +29,7 @@ class AemetClima():
         self.aemet_sites = self._saved_sites_info()
 
     @staticmethod
-    def _saved_sites_info():
+    def _saved_sites_info() -> SitesDataFrame:
         """
         """
 
@@ -104,7 +104,7 @@ class AemetClima():
             site,
             start_dt: date,
             end_dt: date = date.today()
-    ):
+    ) -> ObservationsDataFrame:
         """
         """
 
@@ -134,7 +134,7 @@ class AemetClima():
                                      metadata=metadata)
 
     @staticmethod
-    def _split_date(start_dt, end_dt, min_years=4):
+    def _split_date(start_dt: date, end_dt: date, min_years: int = 4) -> list:
         """
         Check if interval between start_dt and end_dt is bigger than 5
         years, and if so, divide it in interval of less than 5 years.
