@@ -13,10 +13,10 @@ from dateutil.relativedelta import relativedelta
 from pandas import DataFrame, concat
 from pkg_resources import resource_stream
 
-from types_classes.sites import SitesDataFrame, NearSitesDataFrame
-from types_classes.observations import ObservationsDataFrame
+from pyaemet.types_classes.sites import SitesDataFrame, NearSitesDataFrame
+from pyaemet.types_classes.observations import ObservationsDataFrame
 
-from aemet_request import _AemetApiRequest
+from pyaemet.aemet_request import ClimaValues
 
 
 class AemetClima():
@@ -25,7 +25,7 @@ class AemetClima():
     def __init__(self, apikey):
         """ Get the needed API key"""
 
-        self._aemet_request = _AemetApiRequest(apikey=apikey)
+        self._aemet_request = ClimaValues(apikey=apikey)
         self.aemet_sites = self._saved_sites_info()
 
     @staticmethod

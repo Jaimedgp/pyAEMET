@@ -11,8 +11,8 @@ from datetime import date, datetime
 import requests
 import pandas as pd
 
-from utilities.coordinates import transform_coordinates, get_site_address
-from utilities.curation import update_fields, decimal_notation, convert_hours
+from pyaemet.utilities.coordinates import transform_coordinates, get_site_address
+from pyaemet.utilities.curation import update_fields, decimal_notation, convert_hours
 
 sites_translation = \
 {
@@ -81,46 +81,8 @@ observations_translation = \
 }
 
 
-def _aemet_request(url: str, params: dict, headers: dict):
-    """
-    """
-
-    if "api_key" not in params.keys():
-        raise AttributeError("No 'api_key' found.")
-
-    response = requests.request("GET",
-                                url,
-                                headers=headers,
-                                params=params
-                                )
-
-    if response.ok:
-        if response.json()["estado"] == 429:
-            data, metadata = {}, response.json()
-        if response.json()["estado"] == 200:
-            data_url = response.json()["datos"]
-            metadata_url = response.json()["metadatos"]
-
-            data = requests.request("GET",
-                                    data_url, headers=headers) \
-                           .json()
-            metadata = requests.request("GET",
-                                        metadata_url, headers=headers) \
-                               .json()
-
-        if response.json()["estado"] == 404:
-            data, metadata = {}, response.json()
-        if response.json()["estado"] == 401:
-            data, metadata = {}, response.json()
-
-    else:
-        data, metadata = {}, response.json()
-
-    return data, metadata
-
-
 class _AemetApiRequest():
-    """ Class to download climatological data using AEMET api"""
+    """ Class to download data using AEMET api"""
 
     def __init__(self, apikey):
         """ Get the needed API key"""
@@ -132,16 +94,57 @@ class _AemetApiRequest():
                          "Content-Type": "application/json",
                          }
 
+    def _aemet_request(self, url):
+        """
+        """
+
+        response = requests.request("GET",
+                                    self.main_url+url,
+                                    headers=self._headers,
+                                    params=self._params
+                                    )
+
+        if response.ok:
+            if response.json()["estado"] == 429:
+                data, metadata = {}, response.json()
+            elif response.json()["estado"] == 200:
+                data_url = response.json()["datos"]
+                metadata_url = response.json()["metadatos"]
+
+                data = requests.request("GET",
+                                        data_url, headers=self._headers) \
+                            .json()
+                metadata = requests.request("GET",
+                                            metadata_url, headers=self._headers) \
+                               .json()
+
+            elif response.json()["estado"] == 404:
+                data, metadata = {}, response.json()
+            elif response.json()["estado"] == 401:
+                data, metadata = {}, response.json()
+            else:
+                data, metadata = {}, response.json()
+        else:
+            data, metadata = {}, response.json()
+
+        return data, metadata
+
+
+class ClimaValues(_AemetApiRequest):
+    """ Class to download climatological data using AEMET api"""
+
+    def __init__(self, apikey):
+        """ Get the needed API key"""
+
+        super().__init__(apikey)
+        self.main_url += "valores/climatologicos/"
+
     def get_sites_info(self, old_dataframe: pd.DataFrame):
         """
         """
 
-        data, metadata = _aemet_request(url=(self.main_url +
-                                             "valores/climatologicos/" +
-                                             "inventarioestaciones/" +
-                                             "todasestaciones/"),
-                                        params=self._params,
-                                        headers=self._headers)
+        data, metadata = self._aemet_request(url=("inventarioestaciones/" +
+                                                  "todasestaciones/"))
 
         if not bool(data):
             return pd.DataFrame(columns=sites_translation.keys()), metadata
@@ -187,15 +190,11 @@ class _AemetApiRequest():
                   "idema": idema
                   }
 
-        data, metadata = _aemet_request(url=(self.main_url +
-                                             "valores/climatologicos/" +
-                                             "diarios/datos/fechaini/" +
-                                             "{fechaIniStr}/fechafin/" +
-                                             "{fechaFinStr}/estacion/" +
-                                             "{idema}"
-                                             ).format(**params),
-                                        params=self._params,
-                                        headers=self._headers)
+        data, metadata = self._aemet_request(url=("diarios/datos/fechaini/" +
+                                                  "{fechaIniStr}/fechafin/" +
+                                                  "{fechaFinStr}/estacion/" +
+                                                  "{idema}"
+                                                  ).format(**params))
 
         if not bool(data):
             return (pd.DataFrame(columns=observations_translation.keys()),
