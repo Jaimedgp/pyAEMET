@@ -21,14 +21,16 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    install_requires = [
+    install_requires=[
         "setuptools>=42",
         "wheel",
         "numpy",
+        "matplotlib",
         "pandas",
         "requests",
         "geocoder",
         "python-dateutil",
+        "folium",
     ],
     # include=['pyaemet',
     #          'pyaemet.types_classes',
