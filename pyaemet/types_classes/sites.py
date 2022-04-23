@@ -228,7 +228,7 @@ class SitesDataFrame(pandas.DataFrame):
 
 class NearSitesDataFrame(SitesDataFrame):
     """
-    NEEDS TO HAVE THE FOLLOWING COLUMNS:
+    MUST HAVE THE FOLLOWING COLUMNS:
 
         site (CODE),
         name (NAME OF THE STATION),
@@ -269,7 +269,7 @@ class NearSitesDataFrame(SitesDataFrame):
     @staticmethod
     def _validate(obj):
         """
-        NEEDS TO HAVE THE FOLLOWING COLUMNS:
+        MUST HAVE THE FOLLOWING COLUMNS:
 
             site (CODE),
             name (NAME OF THE STATION),
