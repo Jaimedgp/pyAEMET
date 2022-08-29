@@ -27,8 +27,8 @@ class ObservationsDataFrame(DataFrame):
             columns=None,
             dtype=None,
             copy=None,
-            library: str = None,
-            metadata: dict = None,
+            library: str=None,
+            metadata: dict=None,
     ):
 
         super().__init__(
