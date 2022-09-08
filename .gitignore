@@ -1,2 +1,11 @@
+# Secret information
+.env
+
 # personal python environment
 .python-version
+
+__pycache__/
+.ipynb_checkpoints/
+.pytest_cache/
+
+*.ipynb

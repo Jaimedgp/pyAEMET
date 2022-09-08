@@ -1,17 +1,42 @@
 [tool.poetry]
 name = "pyaemet"
-version = "2.0.0"
+version = "2.0.1"
+
 description = "Python module to interact with the AEMET API to download meteorological data"
-authors = ["Jaimedgp <jaime.diez.gp@gmail.com>"]
-license = "GPL-3.0 license"
+readme = "README.md"
+
+authors = [
+    "Jaimedgp <jaime.diez.gp@gmail.com>"
+]
+maintainers = [
+    "Jaimedgp <jaime.diez.gp@gmail.com>"
+]
+
+classifiers=[
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent"
+]
+keywords=[ "AEMET", "Meteorology", "API", "AEMET OpenData" ]
+
+repository = "https://github.com/jaimedgp/pyAEMET"
+
+license = "GPL-3.0-or-later"
+packages = [
+    { include = "pyaemet", from = "src" },
+]
 
 [tool.poetry.dependencies]
 python = "^3.8"
 numpy = "^1.23.2"
-pandas = "^1.4.3"
+requests = "^2.28.1"
+pandas = "^1.4.4"
+python-dotenv = "^0.20.0"
+folium = "^0.12.1"
+geocoder = "^1.38.1"
 
 [tool.poetry.dev-dependencies]
-requests = "^2.28.1"
+pytest = "^7.1.2"
+python-dotenv = "^0.20.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

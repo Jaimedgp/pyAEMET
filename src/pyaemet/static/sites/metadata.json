@@ -1,0 +1,95 @@
+{
+    "unidad_generadora_aemet": "Servicio del Banco de Datos Nacional de Climatolog\u00eda",
+    "periodicidad_aemet": "1 vez al d\u00eda",
+    "descripcion_aemet": "Inventario de estaciones para el apartado Valores Climatolog\u00eda",
+    "formato_aemet": "application/json",
+    "copyright_aemet": "\u00a9 AEMET. Autorizado el uso de la informaci\u00f3n y su reproducci\u00f3n citando a AEMET como autora de la misma.",
+    "notaLegal_aemet": "http://www.aemet.es/es/nota_legal",
+    "access_date": "2021-12-09T22:29:02.937483",
+    "fields": {
+        "site": {
+            "id": "indicativo",
+            "dtype": "string",
+            "aemet": {
+                "descripcion": "indicativo climatol\u00f3gico de la estaci\u00f3n",
+                "tipo_datos": "string",
+                "requerido": true
+            }
+        },
+        "name": {
+            "id": "nombre",
+            "dtype": "string",
+            "aemet": {
+                "descripcion": "ubicaci\u00f3n de la estaci\u00f3n",
+                "tipo_datos": "string",
+                "requerido": true
+            }
+        },
+        "synindic": {
+            "id": "indsinop",
+            "dtype": "string",
+            "aemet": {
+                "descripcion": "Indicativo sin\u00f3ptico",
+                "tipo_datos": "string",
+                "requerido": true
+            }
+        },
+        "latitude": {
+            "id": "latitud",
+            "dtype": "float64",
+            "aemet": {
+                "descripcion": "latitud de la estaci\u00f3n",
+                "tipo_datos": "string",
+                "requerido": true
+            }
+        },
+        "longitude": {
+            "id": "longitud",
+            "dtype": "float64",
+            "aemet": {
+                "descripcion": "longitud de la estaci\u00f3n",
+                "tipo_datos": "string",
+                "requerido": true
+            }
+        },
+        "altitude": {
+            "id": "altitud",
+            "dtype": "float64",
+            "aemet": {
+                "descripcion": "altitud de la estaci\u00f3n ",
+                "tipo_datos": "string",
+                "requerido": true
+            }
+        },
+        "district": {
+            "id": "distrito",
+            "dtype": "string"
+        },
+        "city": {
+            "id": "ciudad",
+            "dtype": "string"
+        },
+        "subregion": {
+            "id": "provincia",
+            "dtype": "string",
+            "aemet": {
+                "descripcion": "provincia donde reside la estaci\u00f3n",
+                "tipo_datos": "string",
+                "requerido": true
+            }
+        },
+        "region": {
+            "id": "Comunidad Autonoma",
+            "dtype": "string"
+        },
+        "subregion_aemet": {
+            "id": "provincia",
+            "dtype": "string",
+            "aemet": {
+                "descripcion": "provincia donde reside la estaci\u00f3n",
+                "tipo_datos": "string",
+                "requerido": true
+            }
+        }
+    }
+}
