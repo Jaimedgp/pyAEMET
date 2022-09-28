@@ -30,9 +30,9 @@ python = "^3.8"
 numpy = "^1.23.2"
 requests = "^2.28.1"
 pandas = "^1.4.4"
-python-dotenv = "^0.20.0"
 folium = "^0.12.1"
 geocoder = "^1.38.1"
+python-dateutil = "^2.8.2"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
