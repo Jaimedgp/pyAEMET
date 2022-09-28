@@ -115,6 +115,9 @@ class SitesDataFrame(pandas.DataFrame):
                               library=self.library,
                               metadata=self.metadata)
 
+    def as_dataframe(self):
+        return super().copy(True)
+
     @property
     def map(self):
         """
@@ -181,7 +184,7 @@ class SitesDataFrame(pandas.DataFrame):
         sites_distance = sites_distance.__getitem__(
             sites_distance.__getitem__("distance") <=
             max_distance).sort_values(by=['distance'],
-                                      ascending=True)[:(n_near+1)]
+                                      ascending=True)[:(n_near)]
 
         return NearSitesDataFrame(ref_point=[latitude, longitude],
                                   data=sites_distance, metadata=self.metadata)
@@ -328,3 +331,7 @@ class NearSitesDataFrame(SitesDataFrame):
                       tooltip="Click me!").add_to(mapa)
 
         return mapa
+
+    def as_dataframe(self):
+        return super().copy(True)
+

@@ -12,6 +12,7 @@ import requests
 import pandas as pd
 
 from .utilities.coordinates import transform_coordinates, get_site_address
+from .utilities.dictionaries import SITES_TRANSLATION, OBSERVATIONS_TRANSLATION
 from .utilities.curation import (
     update_fields,
     decimal_notation,
@@ -19,69 +20,6 @@ from .utilities.curation import (
     remove_newline
     )
 
-sites_translation = {
-    "site": {"id": "indicativo",
-             "dtype": "string"},
-    "name": {"id": "nombre",
-             "dtype": "string"},
-    "synindic": {"id": "indsinop",
-                 "dtype": "string"},
-    "latitude": {"id": "latitud",
-                 "dtype": "float64"},
-    "longitude": {"id": "longitud",
-                  "dtype": "float64"},
-    "altitude": {"id": "altitud",
-                 "dtype": "float64"},
-    "district": {"id": "distrito",
-                 "dtype": "string"},
-    "city": {"id": "ciudad",
-             "dtype": "string"},
-    "subregion": {"id": "provincia",
-                  "dtype": "string"},
-    "region": {"id": "Comunidad Autonoma",
-               "dtype": "string"},
-    "subregion_aemet": {"id": "provincia",
-                        "dtype": "string"},
-}
-
-observations_translation = {
-    "date": {"id": "fecha",
-             "dtype": "datetime64"},
-    "site": {"id": "indicativo",
-             "dtype": "string"},
-    "altitude": {"id": "altitud",
-                 "dtype": "float64"},
-    "temp_avg": {"id": "tmed",
-                 "dtype": "float64"},
-    "precipitation": {"id": "prec",
-                      "dtype": "float64"},
-    "temp_min": {"id": "tmin",
-                 "dtype": "float64"},
-    "temp_max": {"id": "tmax",
-                 "dtype": "float64"},
-    "hr_temp_min": {"id": "horatmin",
-                    "dtype": "object"},
-    "hr_temp_max": {"id": "horatmax",
-                    "dtype": "object"},
-    "wnd_dir": {"id": "dir",
-                "dtype": "float64"},
-    "wnd_spd": {"id": "velmedia",
-                "dtype": "float64"},
-    "wnd_gst": {"id": "racha",
-                "dtype": "float64"},
-    "hr_wnd_gst": {"id": "horaracha",
-                   "dtype": "object"},
-    "press_max": {"id": "presMax",
-                  "dtype": "float64"},
-    "hr_press_max": {"id": "horaPresMax",
-                     "dtype": "object"},
-    "press_min": {"id": "presMin",
-                  "dtype": "float64"},
-    "hr_press_min": {"id": "horaPresMin",
-                     "dtype": "object"},
-    "hr_sun": {"id": "sol",
-               "dtype": "float64"},
-}
 
 
 class _AemetApiRequest():
@@ -151,14 +89,14 @@ class ClimaValues(_AemetApiRequest):
                                                   "todasestaciones/"))
 
         if not bool(data):
-            return pd.DataFrame(columns=sites_translation.keys()), metadata
+            return pd.DataFrame(columns=SITES_TRANSLATION.keys()), metadata
 
         data = pd.DataFrame(data) \
                  .rename(columns={v["id"]: k
-                                  for k, v in sites_translation.items()}) \
+                                  for k, v in SITES_TRANSLATION.items()}) \
                  .apply(transform_coordinates) \
                  .astype({k: v["dtype"]
-                          for k, v in sites_translation.items()
+                          for k, v in SITES_TRANSLATION.items()
                           if k in data})
 
         if (not all(data.columns.isin(old_dataframe.columns)) or
@@ -178,7 +116,7 @@ class ClimaValues(_AemetApiRequest):
         metadata["access_date"] = datetime.now().isoformat()
         metadata["fields"] = update_fields(data,
                                            metadata.pop("campos_aemet"),
-                                           sites_translation)
+                                           SITES_TRANSLATION)
 
         return remove_newline(data), metadata
 
@@ -202,18 +140,18 @@ class ClimaValues(_AemetApiRequest):
                                                   ).format(**params))
 
         if not bool(data):
-            return (pd.DataFrame(columns=observations_translation.keys()),
+            return (pd.DataFrame(columns=OBSERVATIONS_TRANSLATION.keys()),
                     metadata)
 
         data = pd.DataFrame(data) \
                  .drop(["nombre", "provincia"], axis=1) \
                  .rename(columns={v["id"]: k
-                                  for k, v in observations_translation.items()
+                                  for k, v in OBSERVATIONS_TRANSLATION.items()
                                   }) \
                  .replace({"Ip": "0,05", "Varias": "-1"}) \
                  .apply(decimal_notation, axis=1)
         data = data.astype({k: v["dtype"]
-                            for k, v in observations_translation.items()
+                            for k, v in OBSERVATIONS_TRANSLATION.items()
                             if k in data.columns}) \
                    .apply(convert_hours)
 
@@ -221,6 +159,6 @@ class ClimaValues(_AemetApiRequest):
         metadata["access_date"] = datetime.now().isoformat()
         metadata["fields"] = update_fields(data,
                                            metadata.pop("campos_aemet"),
-                                           observations_translation)
+                                           OBSERVATIONS_TRANSLATION)
 
         return remove_newline(data), metadata

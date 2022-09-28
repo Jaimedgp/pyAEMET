@@ -7,16 +7,20 @@ Python module to operate with AEMET OpenData API REST
 :author Jaimedgp
 """
 
-# from copy import copy
+import logging
 from datetime import date
 from dateutil.relativedelta import relativedelta
-from pandas import DataFrame, concat
 from pkg_resources import resource_stream
 
-from pyaemet.types_classes.sites import SitesDataFrame, NearSitesDataFrame
-from pyaemet.types_classes.observations import ObservationsDataFrame
+from pandas import DataFrame, concat
 
-from pyaemet.aemet_request import ClimaValues
+from .types_classes.sites import SitesDataFrame, NearSitesDataFrame
+from .types_classes.observations import ObservationsDataFrame
+from .aemet_request import ClimaValues
+from .utilities.dictionaries import V1_TRANSLATION
+
+
+logger = logging.getLogger()
 
 
 class AemetClima():
@@ -56,13 +60,37 @@ class AemetClima():
 
         return self.aemet_sites.copy()
 
+    def estaciones_info(self, actualizar=True):
+        """ Obtener informacion de las estaciones meteorologicas de la AEMET
+            Deprecado en la version 2.0.0
+
+        """
+
+        logger.warning("<AemetClima>.estaciones_info() is deprecated since "
+                       + "version 2.0.0. Please use <AemetClima>.sites_info() "
+                       + "instead and take advantage of <SitesDataFrame> "
+                       + "new options.")
+
+        return self.sites_info(update=actualizar) \
+                   .as_dataframe() \
+                   .rename(columns=V1_TRANSLATION)
+
     def sites_in(
             self,
             update_first: bool = False,
             **kwargs,
     ) -> SitesDataFrame:
         """
-        Return sites in
+        Get all the AEMET monitoring sites in a city, province (subregion) or
+        autonomous community (region).
+        :param city: string with city name.
+            Default: None
+        :param province: string with province (or subregion) name. If city
+            is provided, the province is ignore. Default: None
+        :param ccaa: string with autonomus community (or region). If province
+            is provided, the ccaa is ignore. Default: None
+        :returns: pandas DataFrame with AEMET monitoring sites in the city,
+            province or ccaa information
         """
 
         # Check if an update is needed first
@@ -70,6 +98,27 @@ class AemetClima():
             self.sites_info()
 
         return self.aemet_sites.filter_in(**kwargs,)
+
+    def estaciones_loc(
+        self,
+        actualizar: bool = False,
+        **kwargs,
+    ) -> DataFrame:
+
+        logger.warning("<AemetClima>.estaciones_loc() is deprecated since "
+                       + "version 2.0.0. Please use <AemetClima>.sites_in() "
+                       + "instead and take advantage of <SitesDataFrame> "
+                       + "new options.")
+
+        translation = {vl: ky for ky, vl in V1_TRANSLATION.items()}
+        new_kwargs = {}
+        for ky, vl in kwargs.items():
+            new_kwargs[translation[ky]] = vl
+
+        return self.sites_in(**new_kwargs, update_first=actualizar) \
+                   .as_dataframe() \
+                   .rename(columns=V1_TRANSLATION)
+
 
     def near_sites(
             self,
@@ -80,7 +129,18 @@ class AemetClima():
             update_first: bool = False,
     ) -> NearSitesDataFrame:
         """
-        Return sites in
+        Get all the AEMET monitoring sites in a city, province or
+        autonomous community (ccaa).
+
+        :param city: string with city name.
+            Default: None
+        :param province: string with province (or subregion) name. If city
+            is provided, the province is ignore. Default: None
+        :param ccaa: string with autonomus community (or region). If province
+            is provided, the ccaa is ignore. Default: None
+
+        :returns: pandas DataFrame with AEMET monitoring sites in the city,
+            province or ccaa information
         """
 
         # Check if an update is needed first
@@ -94,6 +154,37 @@ class AemetClima():
             longitude,
             n_near,
             max_distance)
+
+    def estaciones_cerca(
+            self,
+            latitud: float,
+            longitud: float,
+            n_cercanas=100,
+            max_distancia: float = 6237.0,
+            actualizar: bool = False,
+    ) -> DataFrame:
+        """
+        Return sites in
+        """
+
+        logger.warning("<AemetClima>.estaciones_cerca() is deprecated since "
+                       + "version 2.0.0. Please use <AemetClima>.near_sites() "
+                       + "instead and take advantage of <SitesDataFrame> "
+                       + "new options.")
+
+        # Check if an update is needed first
+        if self.aemet_sites.empty or actualizar:
+            sites = self.sites_info()
+        else:
+            sites = self.aemet_sites
+
+        return sites.filter_at(latitude=latitud,
+                               longitude=longitud,
+                               n_near=n_cercanas,
+                               max_distance=max_distancia) \
+                    .as_dataframe() \
+                    .rename(columns=V1_TRANSLATION)
+
 
     def daily_clima(
             self,
@@ -128,6 +219,22 @@ class AemetClima():
         return ObservationsDataFrame(data=concat(data_list),
                                      library="pyaemet",
                                      metadata=metadata)
+
+    def clima_diaria(
+        self,
+        estacion,
+        fecha_ini: date,
+        fecha_fin: date = date.today()
+    ) -> ObservationsDataFrame:
+
+        logger.warning("<AemetClima>.clima_diaria() is deprecated since "
+                       + "version 2.0.0. Please use <AemetClima>.daily_clima() "
+                       + "instead and take advantage of <SitesDataFrame> "
+                       + "new options.")
+
+        return self.daily_clima(site=estacion,
+                                start_dt=fecha_ini,
+                                end_dt=fecha_fin)
 
     @staticmethod
     def _split_date(start_dt: date, end_dt: date, min_years: int = 4) -> list:
