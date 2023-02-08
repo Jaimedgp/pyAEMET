@@ -10,7 +10,7 @@
 ## Installation
 ``` bash
 $ pip install pyaemet
-
+```
 ## Usage
 ## FAQ
 ## Contributing
