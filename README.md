@@ -14,6 +14,9 @@ to facilitate downloading and filtering the climatological data.
 ``` bash
 $ pip install pyaemet
 ```
+To use the pyAEMET module, you need to get an API key from the AEMET (Spanish State Meteorological
+Agency) OpenData platform. You can apply for a key [here](https://opendata.aemet.es/centrodedescargas/altaUsuario).
+
 ## Usage
 ## FAQ
 ## Contributing
