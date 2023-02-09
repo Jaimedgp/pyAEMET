@@ -195,26 +195,35 @@ class AemetClima():
 
 
     def near_sites(
-            self,
-            latitude: float,
-            longitude: float,
-            n_near: int = 100,
-            max_distance: float = 6237.0,
-            update_first: bool = False,
+        self,
+        latitude: float,
+        longitude: float,
+        n_near: int = 100,
+        max_distance: float = 6237.0,
+        update_first: bool = False,
     ) -> NearSitesDataFrame:
         """
-        Get all the AEMET monitoring sites in a city, province or
-        autonomous community (ccaa).
-
-        :param city: string with city name.
-            Default: None
-        :param province: string with province (or subregion) name. If city
-            is provided, the province is ignore. Default: None
-        :param ccaa: string with autonomus community (or region). If province
-            is provided, the ccaa is ignore. Default: None
-
-        :returns: pandas DataFrame with AEMET monitoring sites in the city,
-            province or ccaa information
+        Retrieve information about climatic stations near a set of coordinates.
+        
+        Parameters
+        ----------
+        latitude : float
+            Latitude of the location to search the nearest climatic stations.
+        longitude : float
+            Longitude of the location to search the nearest climatic stations.
+        n_near : int, optional
+            Number of nearest climatic stations to return, by default 100.
+        max_distance : float, optional
+            Maximum distance, in meters, to return the nearest climatic 
+            stations, by default 6237.0.
+        update_first : bool, optional
+            Flag to indicate if it is necessary to update the climatic 
+            stations information before filtering them, by default False.
+            
+        Returns
+        -------
+        NearSitesDataFrame
+            DataFrame with the information of the nearest climatic stations.
         """
 
         # Check if an update is needed first
@@ -230,15 +239,37 @@ class AemetClima():
             max_distance)
 
     def estaciones_cerca(
-            self,
-            latitud: float,
-            longitud: float,
-            n_cercanas=100,
-            max_distancia: float = 6237.0,
-            actualizar: bool = False,
+        self,
+        latitud: float,
+        longitud: float,
+        n_cercanas=100,
+        max_distancia: float = 6237.0,
+        actualizar: bool = False,
     ) -> DataFrame:
         """
-        Return sites in
+        Retrieve information about climatic stations near a set of coordinates.
+
+        .. deprecated:: 2.0.0
+            Please use `near_sites()` instead and take advantage 
+            of `NearSitesDataFrame` new options.
+            
+        Parameters
+        ----------
+        latitud: float
+            Latitude of the point
+        longitud: float
+            Longitude of the point
+        n_cercanas: int, optional
+            Number of closest stations to return. Default is 100
+        max_distancia: float, optional
+            Maximum distance in km to consider a station as 'nearby'
+        actualizar: bool, optional
+            Update the internal list of climatic stations. Default is False
+    
+        Returns:
+        -------
+        pandas.DataFrame
+            DataFrame with the information of the closest climatic stations
         """
 
         logger.warning("<AemetClima>.estaciones_cerca() is deprecated since "
@@ -261,10 +292,10 @@ class AemetClima():
 
 
     def daily_clima(
-            self,
-            site,
-            start_dt: date,
-            end_dt: date = date.today()
+        self,
+        site,
+        start_dt: date,
+        end_dt: date = date.today()
     ) -> ObservationsDataFrame:
         """
         """
