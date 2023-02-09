@@ -18,6 +18,44 @@ To use the pyAEMET module, you need to get an API key from the AEMET (Spanish St
 Agency) OpenData platform. You can apply for a key [here](https://opendata.aemet.es/centrodedescargas/altaUsuario).
 
 ## Usage
+
+Once the module is installed and you have your API key, you can start using the module by
+importing it in your Python script. To use the module's functions, you need to initialize
+the client with your API key:
+
+```python
+import pyaemet
+
+aemet = pyaemet.AemetClima(api_key)
+```
+
+The `AemetClima` class takes an API key as a parameter in its constructor and allows you to get
+information about the available monitoring sites, filter sites based on different parameters
+(e.g., city, province, autonomous community), and get nearby sites to a specific location.
+
+Here is a summary of some of the methods provided by the `AemetClima` class:
+
+* **`sites_info`**: Retrieves information about all the available monitoring sites. The method
+returns an instance of the `SitesDataFrame` class, which is a subclass of the pandas `DataFrame`.
+
+* **`sites_in`**: Filters the available monitoring sites based on specified parameters
+(e.g., city, province, autonomous community). The method returns an instance of the `SitesDataFrame` class.
+
+* **`near_sites`**: Retrieves the ``n_near`` monitoring sites closest to a specified latitude and longitude,
+within a maximum distance of `max_distance` kilometers. The method returns an instance of the
+`NearSitesDataFrame` class.
+
+* **`daily_clima`**: Retrieves daily climate data for a given ``site`` or a list of sites over a
+specified date range defined by `start_dt` and `end_dt`. The function returns a
+`ObservationsDataFrame` object, which is a data structure that holds the retrieved climate data
+along with any associated metadata.
+
+The module also provides two deprecated methods `estaciones_info`, `estaciones_loc` and `clima_diaria`
+that perform similar functionality as the `sites_info`, `sites_in` and `daily_clima` methods, respectively.
+
+You can find the complete documentation of the module's functions in the GitHub repository,
+under the docs directory.
+
 ## FAQ
 ## Contributing
 ## Conclusion
