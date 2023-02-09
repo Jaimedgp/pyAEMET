@@ -10,6 +10,10 @@ A python library developed to download daily climatological values from the Span
 Meteorological Agency (AEMET) through its OpenData API. The library contains several methods
 to facilitate downloading and filtering the climatological data.
 
+> The information that this library collects and uses is property of the Spanish State 
+> Meteorological Agency, available through its AEMET OpenData REST API.
+
+
 ## Installation
 ``` bash
 $ pip install pyaemet
@@ -78,5 +82,3 @@ under the docs directory.
 ## Conclusion
 ## References
 * "Estimating changes in air pollutant levels due to COVID-19 lockdown measures based on a business-as-usual prediction scenario using data mining models: A case-study for urban traffic sites in Spain", submitted to Environmental Software & Modelling by J. González-Pardo et al. (2021)
-
-> The information that this library collects and uses is property of the Spanish State Meteorological Agency, available through its AEMET OpenData REST API.
