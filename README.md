@@ -50,7 +50,7 @@ specified date range defined by `start_dt` and `end_dt`. The function returns a
 `ObservationsDataFrame` object, which is a data structure that holds the retrieved climate data
 along with any associated metadata.
 
-The module also provides two deprecated methods `estaciones_info`, `estaciones_loc` and `clima_diaria`
+The module also provides three deprecated methods `estaciones_info`, `estaciones_loc` and `clima_diaria`
 that perform similar functionality as the `sites_info`, `sites_in` and `daily_clima` methods, respectively.
 
 You can find the complete documentation of the module's functions in the GitHub repository,
