@@ -1,10 +1,7 @@
 """
-AEMET API MODULE
------------------
-
-Python module to operate with AEMET OpenData API REST
-
-:author Jaimedgp
+This is the AemetClima class that interfaces with AEMET's Climatic Station
+Web Service API. It has several functions to request information about
+climatic stations and to download meteorological observations data.
 """
 
 import os
@@ -27,10 +24,22 @@ logger = logging.getLogger()
 
 
 class AemetClima():
-    """ Class to download climatological data using AEMET api"""
+    """
+    The `AemetClima` class is used to interface with AEMET's Climatic
+    Station Web Service API. It makes available a number of functions
+    for requesting information about the climatic stations, and for
+    downloading meteorological observations data.
+    """
 
-    def __init__(self, apikey: str):
-        """ Get the needed API key"""
+    def __init__(self, apikey):
+        """
+        Initialize the `AemetClima` class with a valid API Key.
+
+        Parameters
+        ----------
+        apikey : str
+            The API Key obtained from AEMET's web services.
+        """
 
         self._aemet_request = ClimaValues(apikey=apikey)
         self._aemet_sites = self._saved_sites_info()
@@ -49,6 +58,14 @@ class AemetClima():
     @staticmethod
     def _saved_sites_info() -> SitesDataFrame:
         """
+        Load the saved information about the AEMET climatic stations
+        from a `SitesDataFrame`.
+
+        Returns
+        -------
+        SitesDataFrame
+            The dataframe containing the information of the AEMET
+            climatic stations.
         """
 
         folder = "static/sites/"
@@ -61,7 +78,19 @@ class AemetClima():
 
     def sites_info(self, update: bool = True) -> SitesDataFrame:
         """
-        Update Sites information from AEMET
+        Get the information about the AEMET climatic stations.
+
+        Parameters
+        ----------
+        update : bool, optional
+            If `True`, the information about the AEMET climatic stations
+            is updated from the AEMET Web Services.
+
+        Returns
+        -------
+        SitesDataFrame
+            The dataframe containing the information of the AEMET
+            climatic stations.
         """
 
         if self.aemet_sites.empty or update:
@@ -74,10 +103,25 @@ class AemetClima():
 
         return self.aemet_sites.copy()
 
-    def estaciones_info(self, actualizar: bool = True):
-        """ Obtener informacion de las estaciones meteorologicas de la AEMET
-            Deprecado en la version 2.0.0
+    def estaciones_info(self, actualizar=True):
+        """
+        Get the information about the AEMET climatic stations.
 
+        .. deprecated:: 2.0.0
+            Please use `sites_info()` instead and take advantage
+            of `SitesDataFrame` new options.
+
+        Parameters
+        ----------
+        actualizar : bool, optional
+            If `True`, the information about the AEMET climatic stationsis updated from the AEMET Web Services.
+
+        Returns
+        -------
+        pandas.DataFrame
+            The dataframe containing the information of the AEMET
+            climatic stations. The columns are named using the Spanish
+            translation of their names.
         """
 
         logger.warning("<AemetClima>.estaciones_info() is deprecated since "
@@ -95,40 +139,57 @@ class AemetClima():
         **kwargs,
         ) -> SitesDataFrame:
         """
-        Get all the AEMET monitoring sites in a city, province (subregion) or
-        autonomous community (region).
+        Get information about climatic stations within a specified
+        region or with specific characteristics.
 
         Parameters
         ----------
-            city: string with city name. Default: None
-            province: string with province (or subregion) name. If city
-                is provided, the province is ignore. Default: None
-            ccaa: string with autonomus community (or region). If province
-                is provided, the ccaa is ignore. Default: None
+        update_first : bool, optional
+            If True, the information about the climatic stations will be
+            updated from the AEMET Web Services before filtering. The
+            updated information will be saved to the `aemet_sites`
+            attribute of the class instance.
+        kwargs : dict
+            Keyword arguments to be passed to the `filter_in` method of
+            the `SitesDataFrame` class.
 
         Returns
         -------
-            pandas DataFrame with AEMET monitoring sites in the city,
-            province or ccaa information
+        SitesDataFrame
+            The filtered dataframe containing the information of the
+            climatic stations.
         """
 
         # Check if an update is needed first
         if self.aemet_sites.empty or update_first:
             self.sites_info()
 
+        # Filter the information of the climatic stations
         return self.aemet_sites.filter_in(**kwargs,)
 
     def estaciones_loc(
         self,
         actualizar: bool = False,
         **kwargs,
-        ) -> DataFrame:
+    ) -> DataFrame | None:
         """
+        Get location data for stations available in Aemet.
+
+        .. deprecated:: 2.0.0
+            Please use `sites_in()` instead and take advantage
+            of `SitesDataFrame` new options.
+
         Parameters
         ----------
+        actualizar : bool, optional
+            Whether to update the data stored in memory. By default, False.
+        **kwargs :
+            Additional parameters to use in the search.
 
         Returns
         -------
+        pd.DataFrame
+            DataFrame with location information for stations.
         """
 
         logger.warning("<AemetClima>.estaciones_loc() is deprecated since "
@@ -150,18 +211,31 @@ class AemetClima():
         latitude: float | int,
         longitude: float | int,
         n_near: int | None = 100,
-        max_distance: float | int = 6237.0,
+        max_distance: float | int = 6237,
         update_first: bool = False,
-        ) -> NearSitesDataFrame:
+    ) -> NearSitesDataFrame:
         """
-        Get all the AEMET monitoring sites in
+        Retrieve information about climatic stations near a set of coordinates.
 
         Parameters
         ----------
+        latitude : float, int
+            Latitude of the location to search the nearest climatic stations.
+        longitude : float, int
+            Longitude of the location to search the nearest climatic stations.
+        n_near : int, optional
+            Number of nearest climatic stations to return, by default 100.
+        max_distance : float, int, optional
+            Maximum distance, in meters, to return the nearest climatic
+            stations, by default 6237.0.
+        update_first : bool, optional
+            Flag to indicate if it is necessary to update the climatic
+            stations information before filtering them, by default False.
 
         Returns
         -------
-            pandas DataFrame with AEMET monitoring sites in
+        NearSitesDataFrame
+            DataFrame with the information of the nearest climatic stations.
         """
 
         # Check if an update is needed first
@@ -181,13 +255,33 @@ class AemetClima():
         latitud: int | float,
         longitud: int | float,
         n_cercanas: int | None = 100,
-        max_distancia: int | float = 6237.0,
+        max_distancia: int | float = 6237,
         actualizar: bool = False,
         ) -> DataFrame | None:
         """
+        Retrieve information about climatic stations near a set of coordinates.
+
+        .. deprecated:: 2.0.0
+            Please use `near_sites()` instead and take advantage
+            of `NearSitesDataFrame` new options.
+
         Parameters
         ----------
-        Return sites in
+        latitud: int, float
+            Latitude of the point
+        longitud: int, float
+            Longitude of the point
+        n_cercanas: int, optional
+            Number of closest stations to return. Default is 100
+        max_distancia: int, float, optional
+            Maximum distance in km to consider a station as 'nearby'
+        actualizar: bool, optional
+            Update the internal list of climatic stations. Default is False
+
+        Returns:
+        -------
+        pandas.DataFrame
+            DataFrame with the information of the closest climatic stations
         """
 
         logger.warning("<AemetClima>.estaciones_cerca() is deprecated since "
@@ -216,8 +310,6 @@ class AemetClima():
         end_dt: date | datetime = date.today()
         ) -> ObservationsDataFrame:
         """
-        Parameters
-        ----------
         """
 
         if isinstance(site, str):
@@ -252,11 +344,6 @@ class AemetClima():
         fecha_fin: date | datetime = date.today()
         ) -> ObservationsDataFrame:
         """
-        Parameters
-        ----------
-        estacion,
-        fecha_ini
-        fecha_fin
         """
 
         logger.warning("<AemetClima>.clima_diaria() is deprecated since "
@@ -322,8 +409,8 @@ class AemetClima():
             returned,
         """
 
-        # To know if the curantion must end when a
-        # nearest site with enough data is found
+        # To know if the curantion must end when a nearest site with
+        # enough data is found
         for_nearest = False
 
         # Convert sites parameter to SitesDataFrame

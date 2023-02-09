@@ -10,6 +10,10 @@ A python library developed to download daily climatological values from the Span
 Meteorological Agency (AEMET) through its OpenData API. The library contains several methods
 to facilitate downloading and filtering the climatological data.
 
+> The information that this library collects and uses is property of the Spanish State 
+> Meteorological Agency, available through its AEMET OpenData REST API.
+
+
 ## Installation
 ``` bash
 $ pip install pyaemet
@@ -36,21 +40,38 @@ information about the available monitoring sites, filter sites based on differen
 Here is a summary of some of the methods provided by the `AemetClima` class:
 
 * **`sites_info`**: Retrieves information about all the available monitoring sites. The method
-returns an instance of the `SitesDataFrame` class, which is a subclass of the pandas `DataFrame`.
+returns an instance of the `SitesDataFrame` class, which is a subclass of the pandas `DataFrame`. 
+```python
+aemet.sites_info(update=True)
+```
 
 * **`sites_in`**: Filters the available monitoring sites based on specified parameters
 (e.g., city, province, autonomous community). The method returns an instance of the `SitesDataFrame` class.
+```python
+aemet.sites_in(subregion="Cantabria")
+```
 
 * **`near_sites`**: Retrieves the ``n_near`` monitoring sites closest to a specified latitude and longitude,
 within a maximum distance of `max_distance` kilometers. The method returns an instance of the
 `NearSitesDataFrame` class.
+```python
+aemet.near_sites(latitude=43.47,  
+                 longitude=-3.798, 
+                 n_near=5, max_distance=50)
+```
 
 * **`daily_clima`**: Retrieves daily climate data for a given ``site`` or a list of sites over a
 specified date range defined by `start_dt` and `end_dt`. The function returns a
 `ObservationsDataFrame` object, which is a data structure that holds the retrieved climate data
 along with any associated metadata.
+```python
+import datetime
+aemet.daily_clima(site=aemet.sites_in(city="Santander"),
+                  start_dt=datetime.date(2022, 6, 3),
+                  end_dt=datetime.date.today())
+```
 
-The module also provides two deprecated methods `estaciones_info`, `estaciones_loc` and `clima_diaria`
+The module also provides three deprecated methods `estaciones_info`, `estaciones_loc` and `clima_diaria`
 that perform similar functionality as the `sites_info`, `sites_in` and `daily_clima` methods, respectively.
 
 You can find the complete documentation of the module's functions in the GitHub repository,
@@ -60,3 +81,4 @@ under the docs directory.
 ## Contributing
 ## Conclusion
 ## References
+* ["Estimating changes in air pollutant levels due to COVID-19 lockdown measures based on a business-as-usual prediction scenario using data mining models: A case-study for urban traffic sites in Spain"](https://doi.org/10.1016/j.scitotenv.2022.153786), submitted to Environmental Software & Modelling by [J. González-Pardo](https://orcid.org/0000-0001-7268-9933) et al. (2021)
