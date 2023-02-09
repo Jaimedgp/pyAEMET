@@ -77,3 +77,7 @@ under the docs directory.
 ## Contributing
 ## Conclusion
 ## References
+* "Estimating changes in air pollutant levels due to COVID-19 lockdown measures based on a business-as-usual prediction scenario using data mining models: A case-study for urban traffic sites in Spain", submitted to Environmental Software & Modelling by J. González-Pardo et al. (2021)
+
+---
+> The information that this library collects and uses is property of the Spanish State Meteorological Agency, available through its AEMET OpenData REST API.
