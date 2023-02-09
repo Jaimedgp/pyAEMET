@@ -1,3 +1,4 @@
+from datetime import date
 import pytest
 
 from src.pyaemet.types_classes.sites import (
@@ -39,3 +40,21 @@ def test_sites_near():
                                 )
 
     assert isinstance(response, NearSitesDataFrame)
+
+
+def test_curation():
+    sites = clima.near_sites(latitude=43.47,
+                             longitude=-3.798,
+                             n_near=4,
+                             update_first = False,
+                             )
+    response = clima.sites_curation(
+        start_dt=date.today(),
+        end_dt=date.today(),
+        sites=sites,
+        threshold=0.75,
+        variables='all',
+        save_folder=None,
+        )
+
+    assert isinstance(response, SitesDataFrame)
