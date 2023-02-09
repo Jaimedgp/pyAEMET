@@ -33,6 +33,7 @@ pandas = "^1.4.4"
 folium = "^0.12.1"
 geocoder = "^1.38.1"
 python-dateutil = "^2.8.2"
+tqdm = "^4.64.1"
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.1.2"
