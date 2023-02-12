@@ -302,59 +302,6 @@ class AemetClima():
                     .as_dataframe() \
                     .rename(columns=V1_TRANSLATION)
 
-
-    def daily_clima(
-        self,
-        site,
-        start_dt: date | datetime,
-        end_dt: date | datetime = date.today()
-        ) -> ObservationsDataFrame:
-        """
-        """
-
-        if isinstance(site, str):
-            pass
-        elif isinstance(site, list):
-            site = ",".join(site)
-        elif isinstance(site, DataFrame):
-            site = ",".join(site.site.drop_duplicates().to_list())
-
-        data_list = []
-        metadata = {}
-
-        # Split dates in intervals where: end_dt - start_dt < 5 years
-        splited_dates = self._split_date(start_dt, end_dt)
-
-        for start, end in splited_dates:
-            data, meta = self._aemet_request \
-                             .get_observations(fechaIniStr=start,
-                                               fechaFinStr=end,
-                                               idema=site)
-            data_list.append(data)
-            metadata.update(meta)
-
-        return ObservationsDataFrame(data=concat(data_list),
-                                     library="pyaemet",
-                                     metadata=metadata)
-
-    def clima_diaria(
-        self,
-        estacion,
-        fecha_ini: date | datetime,
-        fecha_fin: date | datetime = date.today()
-        ) -> ObservationsDataFrame:
-        """
-        """
-
-        logger.warning("<AemetClima>.clima_diaria() is deprecated since "
-                       + "version 2.0.0. Please use <AemetClima>.daily_clima() "
-                       + "instead and take advantage of <SitesDataFrame> "
-                       + "new options.")
-
-        return self.daily_clima(site=estacion,
-                                start_dt=fecha_ini,
-                                end_dt=fecha_fin)
-
     def sites_curation(
         self,
         start_dt: date | datetime,
@@ -365,6 +312,7 @@ class AemetClima():
         threshold: float = 0.75,
         variables: str | list = 'all',
         save_folder: str | os.PathLike | None = ...,
+        verbosity: bool = True,
         ) -> SitesDataFrame | NearSitesDataFrame | DataFrame:
         """
 
@@ -421,53 +369,121 @@ class AemetClima():
             for_nearest = True
         elif isinstance(sites, (Series, DataFrame, SitesDataFrame)):
             try:
-                _sites = self.sites_in(site=sites["site"])
+                _sites = self.sites_in(site=list(sites["site"]))
             except KeyError:
-                _sites = self.sites_in(site=sites["indicativo"])
+                _sites = self.sites_in(site=list(sites["indicativo"]))
         else:
             _sites = sites
 
-        if not _sites or _sites.empty:
+        if not isinstance(_sites, DataFrame) or _sites.empty:
             raise KeyError("No sites' information passed")
 
         _sites["has_enough"] = False
         _sites["amount"] = np.nan
 
-        for st in tqdm(_sites.site):
-            data = self.daily_clima(site=st, start_dt=start_dt, end_dt=end_dt)
+        if verbosity:
+            iteration = tqdm(_sites.site)
+        else:
+            iteration = _sites.site
+
+        for st in iteration:
+            data = self.daily_clima(site=st,
+                                    start_dt=start_dt,
+                                    end_dt=end_dt,
+                                    verbosity=False)
             if data.empty:
                 continue
 
-            is_enough = self._have_enough(data,
-                                          start_date=start_dt,
-                                          end_date=end_dt,
-                                          threshold=threshold,
-                                          columns=variables)
+            is_enough, amount = self._have_enough(data,
+                                                  start_date=start_dt,
+                                                  end_date=end_dt,
+                                                  threshold=threshold,
+                                                  columns=variables)
+
+            _sites.loc[_sites["site"] == st, "has_enough"] = is_enough
+            _sites.loc[_sites["site"] == st, "amount"] = amount
 
             if for_nearest:
                 return _sites.loc[_sites["site"] == st]
-
-            _sites.loc[_sites["site"] == st, "suficientesDatos"] = is_enough
 
             if is_enough and save_folder is not None:
                 data.to_csv(save_folder+st+".csv")
 
         return _sites
 
+    def daily_clima(
+        self,
+        site,
+        start_dt: date | datetime,
+        end_dt: date | datetime = date.today(),
+        verbosity: bool = True
+        ) -> ObservationsDataFrame:
+        """
+        """
+
+        if isinstance(site, str):
+            pass
+        elif isinstance(site, list):
+            site = ",".join(site)
+        elif isinstance(site, DataFrame):
+            site = ",".join(site.site.drop_duplicates().to_list())
+
+        data_list = []
+        metadata = {}
+
+        # Split dates in intervals where: end_dt - start_dt < 5 years
+        splited_dates = self._split_date(start_dt, end_dt)
+
+        if verbosity:
+            splited_dates = tqdm(splited_dates)
+
+        for start, end in splited_dates:
+            data, meta = self._aemet_request \
+                             .get_observations(fechaIniStr=start,
+                                               fechaFinStr=end,
+                                               idema=site)
+            data_list.append(data)
+            metadata.update(meta)
+
+        return ObservationsDataFrame(data=concat(data_list),
+                                     library="pyaemet",
+                                     metadata=metadata)
+
+    def clima_diaria(
+        self,
+        estacion,
+        fecha_ini: date | datetime,
+        fecha_fin: date | datetime = date.today()
+        ) -> ObservationsDataFrame:
+        """
+        """
+
+        logger.warning("<AemetClima>.clima_diaria() is deprecated since "
+                       + "version 2.0.0. Please use <AemetClima>.daily_clima() "
+                       + "instead and take advantage of <SitesDataFrame> "
+                       + "new options.")
+
+        return self.daily_clima(site=estacion,
+                                start_dt=fecha_ini,
+                                end_dt=fecha_fin)
+
     @staticmethod
     def _have_enough(data_frame, start_date, end_date,
                      threshold=0.75, columns: str | list = 'all'):
         """ Docstring """
 
+        if isinstance(columns, str):
+            columns = [columns]
+
         if any(col not in data_frame.columns for col in columns):
-            return False
+            return False, 0.0
         if columns == 'all':
             columns = data_frame.columns
 
         duration = (end_date - start_date).days + 1  # (a, b] => [a, b]
         amount_data = data_frame[columns].notna().sum() / duration
 
-        return (amount_data >= threshold).all()
+        return [(amount_data >= threshold).all(), amount_data.mean()]
 
     @staticmethod
     def _split_date(start_dt: date, end_dt: date, min_years: int = 4) -> list:
