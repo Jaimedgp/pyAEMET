@@ -50,22 +50,24 @@ def hr_to_datetime(value):
         pass
     elif isinstance(value, str):
         if value == "-1":
-            value = time(0, 0, 59)
+            return time(0, 0, 59)
         elif value == "24":
-            value = time(hour=0,
+            return time(hour=0,
                          minute=0,
                          second=0)
         elif ":" in value:
-            hour, minute = value.split(":")
-            value = time(hour=int(hour),
-                         minute=int(minute),
-                         second=0)
+            hour, minute = map(int, value.split(":"))
+            if (0 <= hour <= 23) and (0 <= minute <= 59):
+                return time(hour=hour,
+                            minute=minute,
+                            second=0)
         else:
-            value = time(hour=int(value),
-                         minute=0,
-                         second=0)
+            if 0 <= int(value) <= 23:
+                return time(hour=int(value),
+                            minute=0,
+                            second=0)
 
-    return value
+    return None
 
 
 def convert_hours(column: Series):
