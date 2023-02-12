@@ -154,6 +154,9 @@ class SitesDataFrame(pandas.DataFrame):
         """
         """
 
+        kwargs.update(
+            {k: [v] for k, v in kwargs.items() if not isinstance(v, list)})
+
         if any(not isinstance(x, list) for x in kwargs.values()):
             raise(TypeError("only list-like objects are allowed to be passed" +
                             " to filter_in(), you passed a [str]"))
@@ -335,3 +338,11 @@ class NearSitesDataFrame(SitesDataFrame):
     def as_dataframe(self):
         return super().copy(True)
 
+    def sort_values(self, **kwargs):
+        return NearSitesDataFrame(
+            data=super().sort_values(**kwargs),
+            ref_point=[self.metadata["Reference Point"]["latitude"],
+                       self.metadata["Reference Point"]["longitude"],
+                       ],
+            metadata=self.metadata
+            )
