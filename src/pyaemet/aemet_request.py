@@ -46,30 +46,30 @@ class _AemetApiRequest():
                                     )
 
         if response.ok:
-            if response.json()["estado"] == 429:
-                data, metadata = {}, response.json()
+            """
+            Possible errores:
+            -----------------
+
+            429:
+            404:
+            401:
+            """
+            if response.text == "":
+                return {}, {"status": "Nothing returned"}
             elif response.json()["estado"] == 200:
                 data_url = response.json()["datos"]
                 metadata_url = response.json()["metadatos"]
 
-                data = requests.request("GET",
-                                        data_url, headers=self._headers) \
-                               .json()
-                metadata = requests.request("GET",
-                                            metadata_url,
-                                            headers=self._headers) \
-                                   .json()
+                return [requests.request("GET",
+                                         data_url, headers=self._headers) \
+                                .json(),
+                        requests.request("GET",
+                                         metadata_url,
+                                         headers=self._headers) \
+                                .json()
+                        ]
 
-            elif response.json()["estado"] == 404:
-                data, metadata = {}, response.json()
-            elif response.json()["estado"] == 401:
-                data, metadata = {}, response.json()
-            else:
-                data, metadata = {}, response.json()
-        else:
-            data, metadata = {}, response.json()
-
-        return data, metadata
+        return {}, response.json()
 
 
 class ClimaValues(_AemetApiRequest):
@@ -148,8 +148,9 @@ class ClimaValues(_AemetApiRequest):
                  .rename(columns={v["id"]: k
                                   for k, v in OBSERVATIONS_TRANSLATION.items()
                                   }) \
-                 .replace({"Ip": "0,05", "Varias": "-1"}) \
+                 .replace({"Ip": "0,05", "Varias": "-1", "Acum": None}) \
                  .apply(decimal_notation, axis=1)
+
         data = data.astype({k: v["dtype"]
                             for k, v in OBSERVATIONS_TRANSLATION.items()
                             if k in data.columns}) \
