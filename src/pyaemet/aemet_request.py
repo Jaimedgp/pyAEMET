@@ -11,6 +11,8 @@ from datetime import date, datetime
 import requests
 import pandas as pd
 
+from pyaemet.types_classes.sites import SitesDataFrame
+
 from .utilities.coordinates import transform_coordinates, get_site_address
 from .utilities.dictionaries import SITES_TRANSLATION, OBSERVATIONS_TRANSLATION
 from .utilities.curation import (
@@ -55,7 +57,10 @@ class _AemetApiRequest():
             401:
             """
             if response.text == "":
-                return {}, {"status": "Nothing returned"}
+                return [{},
+                        {"status":
+                            "Nothing returned. Please check the API key"}
+                       ]
             elif response.json()["estado"] == 200:
                 data_url = response.json()["datos"]
                 metadata_url = response.json()["metadatos"]
@@ -69,7 +74,7 @@ class _AemetApiRequest():
                                 .json()
                         ]
 
-        return {}, response.json()
+        return [ {}, response.json() ]
 
 
 class ClimaValues(_AemetApiRequest):
@@ -81,7 +86,7 @@ class ClimaValues(_AemetApiRequest):
         super().__init__(apikey)
         self.main_url += "valores/climatologicos/"
 
-    def get_sites_info(self, old_dataframe: pd.DataFrame):
+    def get_sites_info(self, old_dataframe: SitesDataFrame):
         """
         """
 
@@ -110,11 +115,13 @@ class ClimaValues(_AemetApiRequest):
                               ).drop_duplicates()
 
         else:
-            data = old_dataframe
+            old_dataframe.metadata.update({"access_date":
+                                           datetime.now().isoformat()})
+            return old_dataframe
 
         metadata = {k+"_aemet": v for k, v in metadata.items()}
         metadata["access_date"] = datetime.now().isoformat()
-        metadata["fields"] = update_fields(data,
+        metadata["fields"] = update_fields(data.columns,
                                            metadata.pop("campos_aemet"),
                                            SITES_TRANSLATION)
 
