@@ -107,7 +107,7 @@ class AemetClima():
         """
         Get the information about the AEMET climatic stations.
 
-        .. deprecated:: 2.0.0
+        .. deprecated:: 1.1.0
             Please use `sites_info()` instead and take advantage
             of `SitesDataFrame` new options.
 
@@ -125,7 +125,7 @@ class AemetClima():
         """
 
         logger.warning("<AemetClima>.estaciones_info() is deprecated since "
-                       + "version 2.0.0. Please use <AemetClima>.sites_info() "
+                       + "version 1.1.0. Please use <AemetClima>.sites_info() "
                        + "instead and take advantage of <SitesDataFrame> "
                        + "new options.")
 
@@ -175,7 +175,7 @@ class AemetClima():
         """
         Get location data for stations available in Aemet.
 
-        .. deprecated:: 2.0.0
+        .. deprecated:: 1.1.0
             Please use `sites_in()` instead and take advantage
             of `SitesDataFrame` new options.
 
@@ -193,7 +193,7 @@ class AemetClima():
         """
 
         logger.warning("<AemetClima>.estaciones_loc() is deprecated since "
-                       + "version 2.0.0. Please use <AemetClima>.sites_in() "
+                       + "version 1.1.0. Please use <AemetClima>.sites_in() "
                        + "instead and take advantage of <SitesDataFrame> "
                        + "new options.")
 
@@ -261,7 +261,7 @@ class AemetClima():
         """
         Retrieve information about climatic stations near a set of coordinates.
 
-        .. deprecated:: 2.0.0
+        .. deprecated:: 1.1.0
             Please use `near_sites()` instead and take advantage
             of `NearSitesDataFrame` new options.
 
@@ -285,7 +285,7 @@ class AemetClima():
         """
 
         logger.warning("<AemetClima>.estaciones_cerca() is deprecated since "
-                       + "version 2.0.0. Please use <AemetClima>.near_sites() "
+                       + "version 1.1.0. Please use <AemetClima>.near_sites() "
                        + "instead and take advantage of <SitesDataFrame> "
                        + "new options.")
 
@@ -411,6 +411,39 @@ class AemetClima():
 
         return _sites
 
+    def estaciones_curacion(
+        self,
+        fecha_ini: date | datetime,
+        fecha_fin: date | datetime = date.today(),
+        umbral: float = 0.75,
+        variables: str | list = 'all',
+        save_folder: str | None = None,
+        actualizar: bool = False,
+        **kwargs
+        ) -> DataFrame | None:
+        """ Docstring """
+
+        logger.warning("<AemetClima>.estaciones_curacion() is deprecated "
+                       + "since version 1.1.0. Please use "
+                       + "<AemetClima>.sites_curation() instead and take "
+                       + "advantage of <SitesDataFrame> and "
+                       + "<NearSitesDataFrame> new options.")
+
+        # Check if an update is needed first
+        if self.aemet_sites.empty or actualizar:
+            sites = self.sites_info()
+        else:
+            sites = self.aemet_sites
+
+        return sites.sites_curation(start_dt=fecha_ini,
+                                    end_dt=fecha_fin,
+                                    threshold=umbral,
+                                    variables=variables,
+                                    save_folder=save_folder,
+                                    ) \
+                    .as_dataframe() \
+                    .rename(columns=V1_TRANSLATION)
+
     def daily_clima(
         self,
         site,
@@ -459,7 +492,7 @@ class AemetClima():
         """
 
         logger.warning("<AemetClima>.clima_diaria() is deprecated since "
-                       + "version 2.0.0. Please use <AemetClima>.daily_clima() "
+                       + "version 1.1.0. Please use <AemetClima>.daily_clima() "
                        + "instead and take advantage of <SitesDataFrame> "
                        + "new options.")
 
