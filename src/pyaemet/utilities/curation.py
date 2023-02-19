@@ -10,12 +10,12 @@ from datetime import time
 from pandas import Series, isna, DataFrame
 
 
-def update_fields(data, metadata, new_metadata):
+def update_fields(data_cols, metadata, new_metadata):
     """
     """
 
     for k, v in new_metadata.items():
-        if k in data.columns:
+        if k in data_cols:
             for i in metadata:
                 if i["id"] == v["id"].lower():
                     v["aemet"] = {k: v for k, v in i.items() if k != "id"}
