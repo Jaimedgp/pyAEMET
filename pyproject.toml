@@ -1,15 +1,20 @@
 [tool.poetry]
 name = "pyaemet"
-version = "2.0.1"
+version = "1.1.0"
 
 description = "Python module to interact with the AEMET API to download meteorological data"
 readme = "README.md"
+homepage = "https://github.com/jaimedgp/pyAEMET"
+repository = "https://github.com/jaimedgp/pyAEMET"
+license = "GPL-3.0-or-later"
 
-authors = [
-    "Jaimedgp <jaime.diez.gp@gmail.com>"
+include = [
+    "LICENSE",
 ]
+
+authors = [ "Jaimedgp <jaime.diez.gp@gmail.com>" ]
 maintainers = [
-    "Jaimedgp <jaime.diez.gp@gmail.com>"
+    "CarmenGBM <carmen.garcia.be96@gmail.com>"
 ]
 
 classifiers=[
@@ -18,19 +23,18 @@ classifiers=[
 ]
 keywords=[ "AEMET", "Meteorology", "API", "AEMET OpenData" ]
 
-repository = "https://github.com/jaimedgp/pyAEMET"
-
-license = "GPL-3.0-or-later"
 packages = [
     { include = "pyaemet", from = "src" },
 ]
-
 exclude = [
-    { path = "./docs/notebooks/secret_key.py" },
+    { path = ".env" },
 ]
 
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/jaimedgp/pyAEMET/issues"
+
 [tool.poetry.dependencies]
-python = "^3.8"
+python = "^3.10"
 numpy = "^1.23.2"
 requests = "^2.28.1"
 pandas = "^1.4.4"
@@ -38,14 +42,12 @@ folium = "^0.12.1"
 geocoder = "^1.38.1"
 python-dateutil = "^2.8.2"
 tqdm = "^4.64.1"
-
-[tool.poetry.dev-dependencies]
-pytest = "^7.1.2"
-python-dotenv = "^0.20.0"
+matplotlib = "^3.6.3"
 
 [tool.poetry.group.dev.dependencies]
+pytest = "^7.1.2"
+python-dotenv = "^0.20.0"
 jupyterlab = "^3.6.1"
-matplotlib = "^3.6.3"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

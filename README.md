@@ -50,7 +50,7 @@ aemet.sites_info(update=True)
 ```python
 aemet.sites_in(subregion="Cantabria")
 ```
-![image](https://github.com/Jaimedgp/pyAEMET/raw/from-0/docs/screenshots/sites_cantabria.png)
+![image](https://github.com/Jaimedgp/pyAEMET/raw/main/docs/screenshots/sites_cantabria.png)
 
 * **`near_sites`**: Retrieves the ``n_near`` monitoring sites closest to a specified latitude and longitude,
 within a maximum distance of `max_distance` kilometers. The method returns an instance of the
@@ -60,7 +60,7 @@ aemet.near_sites(latitude=43.47,
                  longitude=-3.798,
                  n_near=5, max_distance=50)
 ```
-![image](https://github.com/Jaimedgp/pyAEMET/raw/from-0/docs/screenshots/near_sites.png)
+![image](https://github.com/Jaimedgp/pyAEMET/raw/main/docs/screenshots/near_sites.png)
 
 * **`sites_curation`**: Retrieves the amount of available data of certain `variables` in the monitoring `sites` in a period of time defined by
     `start_dt` and `end_dt`. The function returns a `SitesDataFrame` or `NearSitesDataFrame` (depends of the type of the `sites` parameter given)
