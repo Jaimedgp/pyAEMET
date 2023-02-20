@@ -1,6 +1,52 @@
-[build-system]
-requires = [
-    "setuptools",
-    "wheel"
+[tool.poetry]
+name = "pyaemet"
+version = "2.0.1"
+
+description = "Python module to interact with the AEMET API to download meteorological data"
+readme = "README.md"
+
+authors = [
+    "Jaimedgp <jaime.diez.gp@gmail.com>"
 ]
-build-backend = "setuptools.build_meta"
+maintainers = [
+    "Jaimedgp <jaime.diez.gp@gmail.com>"
+]
+
+classifiers=[
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent"
+]
+keywords=[ "AEMET", "Meteorology", "API", "AEMET OpenData" ]
+
+repository = "https://github.com/jaimedgp/pyAEMET"
+
+license = "GPL-3.0-or-later"
+packages = [
+    { include = "pyaemet", from = "src" },
+]
+
+exclude = [
+    { path = "./docs/notebooks/secret_key.py" },
+]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+numpy = "^1.23.2"
+requests = "^2.28.1"
+pandas = "^1.4.4"
+folium = "^0.12.1"
+geocoder = "^1.38.1"
+python-dateutil = "^2.8.2"
+tqdm = "^4.64.1"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.1.2"
+python-dotenv = "^0.20.0"
+
+[tool.poetry.group.dev.dependencies]
+jupyterlab = "^3.6.1"
+matplotlib = "^3.6.3"
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"

@@ -1,124 +1,89 @@
 # pyAEMET
 
-pyaemet es una librería para python desarrollada para la descarga de los valores
-climatologicos diarios de la AEMET a partir de su API OpenData. La librería
-contiene una serie de métodos que facilitan la descarga y filtrado de los datos
-climatológicos y cuyo uso se detalla a continuacion.
+
+[![PyPI Latest Release](https://img.shields.io/pypi/v/pyaemet.svg)](https://pypi.org/project/pyaemet/)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5655307.svg)](https://doi.org/10.5281/zenodo.5655307)
+[![License](https://img.shields.io/pypi/l/pandas.svg)](https://github.com/jaimedgp/pyAEMET/blob/main/LICENSE)
+[![Downloads](https://static.pepy.tech/personalized-badge/pyaemet?period=month&units=international_system&left_color=gray&right_color=orange&left_text=PyPI%20downloads%20per%20month)](https://pepy.tech/project/pyaemet)
+
+A python library developed to download daily climatological values from the Spanish National
+Meteorological Agency (AEMET) through its OpenData API. The library contains several methods
+to facilitate downloading and filtering the climatological data.
+
+> The information that this library collects and uses is property of the Spanish State
+> Meteorological Agency, available through its AEMET OpenData REST API.
+
 
 ## Installation
-
 ``` bash
-
 $ pip install pyaemet
-
 ```
+To use the pyAEMET module, you need to get an API key from the AEMET (Spanish State Meteorological
+Agency) OpenData platform. You can apply for a key [here](https://opendata.aemet.es/centrodedescargas/altaUsuario).
 
+## Usage
 
-## Uso de la librería
-Para poder usar la librería es necesario disponer de una APIkey de OpenData
-AEMET que se puede obtener en este
-[link](https://opendata.aemet.es/centrodedescargas/obtencionAPIKey). A partir de
-esta clave se puede crear un objeto de la clase principal `AemetClima` que
-permitirá utilizar los métodos de la librería.
-
-Se puede consultar el ipython notebook `doc/ejemplo-uso.ipnb` con ejemplos de uso.
+Once the module is installed and you have your API key, you can start using the module by
+importing it in your Python script. To use the module's functions, you need to initialize
+the client with your API key:
 
 ```python
-from pyaemet.valores_climatologicos import AemetClima
+import pyaemet
 
-aemet = AemetClima(apikey=apikey)
+aemet = pyaemet.AemetClima(api_key)
 ```
 
-### Información de las estaciones
+The `AemetClima` class takes an API key as a parameter in its constructor and allows you to get
+information about the available monitoring sites, filter sites based on different parameters
+(e.g., city, province, autonomous community), and get nearby sites to a specific location.
 
-La librería permite obtener información sobre las estaciones con datos
-climatológicos diarios disponibles por la AEMET. Además de la información de
-cada estación facilitada por la AEMET también se incluyen el Distrito, Ciudad,
-Provincia y Comunidad Autónoma de cada estación.
+Here is a summary of some of the methods provided by the `AemetClima` class:
 
-Para algunos casos se ha detectado que la provincia facilitada no corresponde
-con la provincia obtenida a partir de las coordenadas debido a que la estación
-se encuentra proxima a los límites entre provincias. Por ello se ha denominado
-la provincia facilitada por la AEMET con el nombre de `provinciaAemet` y la
-determinada por las coordenadas como `provincia`.
-
+* **`sites_info`**: Retrieves information about all the available monitoring sites. The method
+returns an instance of the `SitesDataFrame` class, which is a subclass of the pandas `DataFrame`.
 ```python
-AemetClima(apikey).estaciones_info()
+aemet.sites_info(update=True)
 ```
 
-Para facilitar el filtrado de las estaciones se ha incluido el método
-`AemetClima.estaciones_loc()` que permite filtrar las estaciones por los valores
-sus columnas. De esta manera se pueden filtrar las estaciones por ciudad,
-provincia o comunidad autónoma.
-
+* **`sites_in`**: Filters the available monitoring sites based on specified parameters
+(e.g., city, province, autonomous community). The method returns an instance of the `SitesDataFrame` class.
 ```python
-AemetClima(apikey).estaciones_loc(nombre_columna=["lista de valores"])
+aemet.sites_in(subregion="Cantabria")
 ```
+![image](https://github.com/Jaimedgp/pyAEMET/raw/from-0/docs/screenshots/sites_cantabria.png)
 
-Por otro lado, el método `AemetClima.estaciones_cerca()` te permite obtener las `n_cercanas`
-estaciones de la AEMET más cercanas a una cierta localización definida por sus coordenadas
-latitud y longitud, junto con su distancia a la localización en km. Por defecto se devuelven
-las 3 estaciones más cercanas.
-
+* **`near_sites`**: Retrieves the ``n_near`` monitoring sites closest to a specified latitude and longitude,
+within a maximum distance of `max_distance` kilometers. The method returns an instance of the
+`NearSitesDataFrame` class.
 ```python
-AemetClima(apikey).estaciones_cerca(latitud, longitud, n_cercanas=3)
+aemet.near_sites(latitude=43.47,
+                 longitude=-3.798,
+                 n_near=5, max_distance=50)
 ```
+![image](https://github.com/Jaimedgp/pyAEMET/raw/from-0/docs/screenshots/near_sites.png)
 
-Por otro lado, se ha añadido el método `AemetClima.estaciones_curacion` para facilitar el
-curado de los datos. Este método permite obtener las estaciones que cumplan el requisito de
-que tengan al menos un porcentaje determinado `umbral` de los datos de ciertas variables
-`variables` disponibles. El método puede comportarse de dos maneras distintas en función de
-los argumentos que se le pasen.
+* **`sites_curation`**: Retrieves the amount of available data of certain `variables` in the monitoring `sites` in a period of time defined by
+    `start_dt` and `end_dt`. The function returns a `SitesDataFrame` or `NearSitesDataFrame` (depends of the type of the `sites` parameter given)
+    with a column with the average `amount` between all `variables` and `has_enough` boolean if the amount is greater or equal to a `threshold`.
 
-El método `AemetClima.estaciones_curacion` permite pasarle la información de las estaciones
-de las cuales se quiere obtener información sobre la cantidad de datos disponibles. De esta
-forma, si se le pase el argumento `estaciones` mediante su `indicativo` en forma de `string`
-o lista de `strings` o pasando directamente un pandas.DataFrame devuelto por los métodos
-vistos anteriormente con la información de las estaciones el método añadirá la columna
-`suficientesDatos` booleana según si la estación cumple o no la condición.
-
+* **`daily_clima`**: Retrieves daily climate data for a given ``site`` or a list of sites over a
+specified date range defined by `start_dt` and `end_dt`. The function returns a
+`ObservationsDataFrame` object, which is a data structure that holds the retrieved climate data
+along with any associated metadata.
 ```python
-AemetClima(apikey).estaciones_curacion(estacion,
-                                       fecha_ini=datetime.date(),
-                                       fecha_fin=datetime.date.now(),
-                                       umbral=0.75,  # por defecto se toma el 75%
-                                       variables=columnas,
-                                       save_folder="directorio/guardar/los/datos/")
+import datetime
+aemet.daily_clima(site=aemet.sites_in(city="Santander"),
+                  start_dt=datetime.date(2022, 6, 3),
+                  end_dt=datetime.date.today())
 ```
 
-Por otro lado, se puede utilizar esta funcion para obtener la estación más cercana a una
-localización que cumpla el requisito de los datos mínimos. Esta función obtiene la
-información de las estaciones llamando a la función
-`AemetClima.estaciones_cerca(latitud, longitud, n_cercanas)`.
+The module also provides three deprecated methods `estaciones_info`, `estaciones_loc` and `clima_diaria`
+that perform similar functionality as the `sites_info`, `sites_in` and `daily_clima` methods, respectively.
 
-```python
-AemetClima(apikey).estaciones_curacion(latitud, longitud, n_cercanas,
-                                       fecha_ini=datetime.date(),
-                                       fecha_fin=datetime.date.now(),
-                                       umbral=0.75,  # por defecto se toma el 75%
-                                       variables=columnas,
-                                       save_folder="directorio/guardar/los/datos/")
-```
+You can find the complete documentation of the module's functions in the GitHub repository,
+under the docs directory.
 
-### Descarga Valores Climatológicos
-
-Para la descarga de los datos climatológicos se han de pasar las fechas de
-inicio y final de los datos, que han de ser objetos de la clase `datetime.date`
-o `datetime.datetime` y las estaciones de las cuales se quieren obtener los
-datos. Estas últimas se pueden pasar mediante su `indicativo` en forma de
-`string` o lista de `strings` o pasando directamente un pandas.DataFrame
-devuelto por los métodos vistos anteriormente con la información de las
-estaciones. El valor de la fecha de fin por defecto será la del día en el que se
-encuentre `datetime.date.today()`.
-
-```python
-AemetClima(apikey).clima_diaria(estacion,
-                                fecha_ini=datetime.date(),
-                                fecha_fin=datetime.date.today()
-                                )
-```
-
-## Referencias
-La información que recoge y utiliza esta librería es propiedad de la Agencia
-Estatal de Meteorología disponible mediante su API REST [AEMET
-OpenData](https://opendata.aemet.es/centrodedescargas/AEMETApi?).
+## FAQ
+## Contributing
+## References
+* ["Estimating changes in air pollutant levels due to COVID-19 lockdown measures based on a business-as-usual prediction scenario using data mining models: A case-study for urban traffic sites in Spain"](https://doi.org/10.1016/j.scitotenv.2022.153786), submitted to Environmental Software & Modelling by [J. González-Pardo](https://orcid.org/0000-0001-7268-9933) et al. (2021)
