@@ -305,7 +305,7 @@ class AemetClima():
     def sites_curation(
         self,
         start_dt,
-        sites: ,
+        sites,
         end_dt = date.today(),
         threshold: float = 0.75,
         variables = 'all',

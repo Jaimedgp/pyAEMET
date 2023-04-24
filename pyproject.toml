@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyaemet"
-version = "1.0.5rc"
+version = "1.0.5rc2"
 
 description = "Python module to interact with the AEMET API to download meteorological data"
 readme = "README.md"
