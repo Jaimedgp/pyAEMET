@@ -26,7 +26,7 @@ SITES_TRANSLATION = {
 
 OBSERVATIONS_TRANSLATION = {
     "date": {"id": "fecha",
-             "dtype": "datetime64"},
+             "dtype": "datetime64[ns]"},
     "site": {"id": "indicativo",
              "dtype": "string"},
     "altitude": {"id": "altitud",

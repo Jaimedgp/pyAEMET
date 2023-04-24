@@ -11,7 +11,7 @@ from datetime import date, datetime
 import requests
 import pandas as pd
 
-from pyaemet.types_classes.sites import SitesDataFrame
+from .types_classes.sites import SitesDataFrame
 
 from .utilities.coordinates import transform_coordinates, get_site_address
 from .utilities.dictionaries import SITES_TRANSLATION, OBSERVATIONS_TRANSLATION
