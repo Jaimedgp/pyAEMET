@@ -6,6 +6,7 @@ SitesDataFrame
 
 import os
 import json
+from typing import List, Optional
 
 import pandas
 import folium
@@ -31,8 +32,8 @@ class SitesDataFrame(pandas.DataFrame):
             columns=None,
             dtype=None,
             copy=None,
-            library: str = None,
-            metadata: dict = None,
+            library: Optional[str] = None,
+            metadata: Optional[dict] = None,
     ):
 
         super().__init__(
@@ -71,9 +72,9 @@ class SitesDataFrame(pandas.DataFrame):
 
     @staticmethod
     def open_from(
-            data_fl: str = None,
-            metadata_fl: str = None,
-            folder_name: str = None
+            data_fl: Optional[str] = None,
+            metadata_fl: Optional[str] = None,
+            folder_name: Optional[str] = None
     ):
         """
         """
@@ -87,10 +88,12 @@ class SitesDataFrame(pandas.DataFrame):
                 raise KeyError("Not correct file path")
             metadata_fl = folder_name + "metadata.json"
 
+        metadata = json.load(metadata_fl)
+
         return SitesDataFrame(
             data=pandas.read_csv(data_fl),
             library="pyaemet",
-            metadata=json.load(metadata_fl)
+            metadata=metadata
             )
 
     def save(self, folder_name: str, extension: str = 'pickle'):
@@ -247,7 +250,7 @@ class NearSitesDataFrame(SitesDataFrame):
 
     def __init__(
             self,
-            ref_point: [float, float],
+            ref_point: List[float],
             data=None,
             index=None,
             columns=None,

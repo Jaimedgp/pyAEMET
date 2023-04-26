@@ -7,6 +7,7 @@ climatic stations and to download meteorological observations data.
 import os
 import logging
 from datetime import date, datetime
+from typing import Optional, Union
 from dateutil.relativedelta import relativedelta
 from pkg_resources import resource_stream
 
@@ -171,7 +172,7 @@ class AemetClima():
         self,
         actualizar: bool = False,
         **kwargs,
-    ) -> DataFrame | None:
+    ) -> Optional[DataFrame]:
         """
         Get location data for stations available in Aemet.
 
@@ -208,10 +209,10 @@ class AemetClima():
 
     def near_sites(
         self,
-        latitude: float | int,
-        longitude: float | int,
-        n_near: int | None = 100,
-        max_distance: float | int = 6237,
+        latitude: Union[float, int],
+        longitude: Union[float, int],
+        n_near: Optional[int] = 100,
+        max_distance: Union[float, int] = 6237,
         update_first: bool = False,
     ) -> NearSitesDataFrame:
         """
@@ -252,12 +253,12 @@ class AemetClima():
 
     def estaciones_cerca(
         self,
-        latitud: int | float,
-        longitud: int | float,
-        n_cercanas: int | None = 100,
-        max_distancia: int | float = 6237,
+        latitud: Union[int, float],
+        longitud: Union[int, float],
+        n_cercanas: Optional[int] = 100,
+        max_distancia: Union[int, float] = 6237,
         actualizar: bool = False,
-        ) -> DataFrame | None:
+        ) -> Union[DataFrame]:
         """
         Retrieve information about climatic stations near a set of coordinates.
 
@@ -304,16 +305,16 @@ class AemetClima():
 
     def sites_curation(
         self,
-        start_dt: date | datetime,
-        sites: ( str | list
-               | Series | DataFrame
-               | SitesDataFrame | NearSitesDataFrame),
-        end_dt: date | datetime = date.today(),
+        start_dt: Union[date, datetime],
+        sites: Union[
+            str, list, Series, DataFrame , SitesDataFrame, NearSitesDataFrame
+        ],
+        end_dt: Union[date, datetime] = date.today(),
         threshold: float = 0.75,
-        variables: str | list = 'all',
-        save_folder: str | os.PathLike | None = ...,
+        variables: Union[str, list] = 'all',
+        save_folder: Optional[Union[str, os.PathLike]] = ...,
         verbosity: bool = True,
-        ) -> SitesDataFrame | NearSitesDataFrame | DataFrame:
+        ) -> Union[SitesDataFrame, NearSitesDataFrame, DataFrame]:
         """
 
         Parameters
@@ -413,14 +414,14 @@ class AemetClima():
 
     def estaciones_curacion(
         self,
-        fecha_ini: date | datetime,
-        fecha_fin: date | datetime = date.today(),
+        fecha_ini: Union[date, datetime],
+        fecha_fin: Union[date, datetime] = date.today(),
         umbral: float = 0.75,
-        variables: str | list = 'all',
-        save_folder: str | None = None,
+        variables: Union[str, list] = 'all',
+        save_folder: Optional[str] = None,
         actualizar: bool = False,
         **kwargs
-        ) -> DataFrame | None:
+        ) -> Optional[DataFrame]:
         """ Docstring """
 
         logger.warning("<AemetClima>.estaciones_curacion() is deprecated "
@@ -447,8 +448,8 @@ class AemetClima():
     def daily_clima(
         self,
         site,
-        start_dt: date | datetime,
-        end_dt: date | datetime = date.today(),
+        start_dt: Union[date, datetime],
+        end_dt: Union[date, datetime] = date.today(),
         verbosity: bool = True
         ) -> ObservationsDataFrame:
         """
@@ -485,8 +486,8 @@ class AemetClima():
     def clima_diaria(
         self,
         estacion,
-        fecha_ini: date | datetime,
-        fecha_fin: date | datetime = date.today()
+        fecha_ini: Union[date, datetime],
+        fecha_fin: Union[date, datetime] = date.today()
         ) -> ObservationsDataFrame:
         """
         """
@@ -502,7 +503,7 @@ class AemetClima():
 
     @staticmethod
     def _have_enough(data_frame, start_date, end_date,
-                     threshold=0.75, columns: str | list = 'all'):
+                     threshold=0.75, columns: Union[str, list] = 'all'):
         """ Docstring """
 
         if isinstance(columns, str):
