@@ -305,6 +305,9 @@ class NearSitesDataFrame(SitesDataFrame):
         plot map with the sites location
         """
 
+        if self.empty:
+            return folium.Map()
+
         index_lat, = np.where(self.columns == "latitude")[0]
         index_lon, = np.where(self.columns == "longitude")[0]
 
