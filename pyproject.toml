@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyaemet"
-version = "1.1.0rc1"
+version = "1.1.0"
 
 description = "Python module to interact with the AEMET API to download meteorological data"
 readme = "README.md"
@@ -35,16 +35,13 @@ exclude = [
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
-requests = "2.24.0"
-numpy = "1.19.0"
-matplotlib = "3.2.2"
-pandas = "1.1.0"
-geocoder = "1.38.0"
-folium = "0.11.0"
-tqdm = "4.46.1"
-
-[tool.poetry.group.dev.dependencies]
-
+requests = "^2.24.0"
+numpy = "^1.19.0"
+matplotlib = "^3.2.2"
+pandas = "^1.1.0"
+geocoder = "^1.38.0"
+folium = "^0.11.0"
+tqdm = "^4.46.1"
 
 [tool.poetry.group.test.dependencies]
 pytest = "6.0.0"

@@ -11,6 +11,7 @@ from typing import List, Optional
 import pandas
 import folium
 import numpy as np
+from pandas.core.frame import DataFrame
 
 
 class SitesDataFrame(pandas.DataFrame):
@@ -127,19 +128,15 @@ class SitesDataFrame(pandas.DataFrame):
         plot map with the sites location
         """
 
+        mapa = folium.Map()
+
         if self.empty:
-            return folium.Map()
+            mapa.fit_bounds([[27.3, -19.3], [44.0, 4.6]])
+            return mapa
 
-        index_lat, = np.where(self.columns == "latitude")[0]
-        index_lon, = np.where(self.columns == "longitude")[0]
+        bounds = self._map_bounds()
 
-        latitudes = self._get_column_array(index_lat)
-        longitudes = self._get_column_array(index_lon)
-
-        center = [np.mean([np.min(latitudes), np.max(latitudes)]),
-                  np.mean([np.min(longitudes), np.max(longitudes)])]
-
-        mapa = folium.Map(location=center, zoom_start=3)
+        mapa.fit_bounds(bounds)
 
         for i in self.index:
             popup = ("<strong>Site:</strong> %s<br>"
@@ -152,6 +149,18 @@ class SitesDataFrame(pandas.DataFrame):
                           tooltip="Click me!").add_to(mapa)
 
         return mapa
+
+    def _map_bounds(self):
+        index_lat, = np.where(self.columns == "latitude")[0]
+        index_lon, = np.where(self.columns == "longitude")[0]
+
+        latitudes = self._get_column_array(index_lat)
+        longitudes = self._get_column_array(index_lon)
+
+        sw = [np.min(latitudes), np.min(longitudes)]
+        ne = [np.max(latitudes), np.max(longitudes)]
+
+        return [sw, ne]
 
     def filter_in(self, **kwargs):
         """
@@ -236,8 +245,17 @@ class SitesDataFrame(pandas.DataFrame):
 
         return new_data
 
+    def sort_values(self, inplace=False, **kwargs):
+        if inplace:
+            super().sort_values(inplace=True, **kwargs)
+        else:
+            return SitesDataFrame(
+                data=super().sort_values(**kwargs),
+                metadata=self.metadata
+                )
 
-class NearSitesDataFrame(SitesDataFrame):
+
+class NearSitesDataFrame(SitesDataFrame, pandas.DataFrame):
     """
     MUST HAVE THE FOLLOWING COLUMNS:
 
@@ -272,10 +290,12 @@ class NearSitesDataFrame(SitesDataFrame):
             metadata=metadata,
         )
 
-        self.metadata.update({"Reference Point": {"latitude": ref_point[0],
-                                                  "longitude": ref_point[1]
-                                                  }
-                              })
+        self.metadata.update({
+            "Reference Point": {
+                "latitude": ref_point[0],
+                "longitude": ref_point[1]
+                }
+        })
 
     @staticmethod
     def _validate(obj):
@@ -305,33 +325,7 @@ class NearSitesDataFrame(SitesDataFrame):
         plot map with the sites location
         """
 
-        if self.empty:
-            return folium.Map()
-
-        index_lat, = np.where(self.columns == "latitude")[0]
-        index_lon, = np.where(self.columns == "longitude")[0]
-
-        latitudes = self._get_column_array(index_lat)
-        longitudes = self._get_column_array(index_lon)
-
-        center = [np.mean([np.min(latitudes), np.max(latitudes)]),
-                  np.mean([np.min(longitudes), np.max(longitudes)])]
-
-        mapa = folium.Map(location=center, zoom_start=3)
-        folium.LayerControl().add_to(mapa)
-
-        for i in self.index:
-            popup = ("<strong>Site:</strong> %s<br>"
-                     % (self._get_value(i, "site")) +
-                     "<strong>Name:</strong> %s<br>"
-                     % (self._get_value(i, "name")) +
-                     "<strong>Distance:</strong> %.2f"
-                     % (self._get_value(i, "distance")))
-
-            folium.Marker([self._get_value(i, "latitude"),
-                           self._get_value(i, "longitude")],
-                          popup=folium.Popup(popup, max_width=480),
-                          tooltip="Click me!").add_to(mapa)
+        mapa = super().map
 
         folium.Marker([self.metadata["Reference Point"]["latitude"],
                        self.metadata["Reference Point"]["longitude"]],
@@ -341,14 +335,32 @@ class NearSitesDataFrame(SitesDataFrame):
 
         return mapa
 
-    def as_dataframe(self):
-        return super().copy(True)
+    # def as_dataframe(self):
+    #     return super().copy(True)
 
-    def sort_values(self, **kwargs):
-        return NearSitesDataFrame(
-            data=super().sort_values(**kwargs),
-            ref_point=[self.metadata["Reference Point"]["latitude"],
-                       self.metadata["Reference Point"]["longitude"],
-                       ],
-            metadata=self.metadata
-            )
+    def sort_values(self, inplace=False, **kwargs):
+        if inplace:
+            super().sort_values(inplace=True, **kwargs)
+        else:
+            return NearSitesDataFrame(
+                data=super().sort_values(**kwargs).copy(),
+                ref_point=[self.metadata["Reference Point"]["latitude"],
+                        self.metadata["Reference Point"]["longitude"],
+                        ],
+                metadata=self.metadata
+                )
+
+    def _map_bounds(self):
+        index_lat, = np.where(self.columns == "latitude")[0]
+        index_lon, = np.where(self.columns == "longitude")[0]
+
+        latitudes = self._get_column_array(index_lat)
+        longitudes = self._get_column_array(index_lon)
+        ref_point = self.metadata["Reference Point"]
+
+        s = np.min([*latitudes, ref_point["latitude"]])
+        w = np.min([*longitudes, ref_point["longitude"]])
+        n = np.max([*latitudes, ref_point["latitude"]])
+        e = np.max([*longitudes, ref_point["longitude"]])
+
+        return [[s, w], [n, e]]

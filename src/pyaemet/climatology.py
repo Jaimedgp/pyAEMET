@@ -138,7 +138,7 @@ class AemetClima():
         self,
         update_first: bool = False,
         **kwargs,
-        ) -> SitesDataFrame:
+    ) -> SitesDataFrame:
         """
         Get information about climatic stations within a specified
         region or with specific characteristics.
@@ -258,7 +258,7 @@ class AemetClima():
         n_cercanas: Optional[int] = 100,
         max_distancia: Union[int, float] = 6237,
         actualizar: bool = False,
-        ) -> Union[DataFrame]:
+    ) -> DataFrame:
         """
         Retrieve information about climatic stations near a set of coordinates.
 
@@ -314,7 +314,7 @@ class AemetClima():
         variables: Union[str, list] = 'all',
         save_folder: Optional[Union[str, os.PathLike]] = ...,
         verbosity: bool = True,
-        ) -> Union[SitesDataFrame, NearSitesDataFrame, DataFrame]:
+    ) -> Union[SitesDataFrame, NearSitesDataFrame, DataFrame]:
         """
 
         Parameters
@@ -421,7 +421,7 @@ class AemetClima():
         save_folder: Optional[str] = None,
         actualizar: bool = False,
         **kwargs
-        ) -> Optional[DataFrame]:
+    ) -> Optional[DataFrame]:
         """ Docstring """
 
         logger.warning("<AemetClima>.estaciones_curacion() is deprecated "
@@ -451,7 +451,7 @@ class AemetClima():
         start_dt: Union[date, datetime],
         end_dt: Union[date, datetime] = date.today(),
         verbosity: bool = True
-        ) -> ObservationsDataFrame:
+    ) -> ObservationsDataFrame:
         """
         """
 
@@ -488,7 +488,7 @@ class AemetClima():
         estacion,
         fecha_ini: Union[date, datetime],
         fecha_fin: Union[date, datetime] = date.today()
-        ) -> ObservationsDataFrame:
+    ) -> ObservationsDataFrame:
         """
         """
 
