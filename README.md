@@ -2,9 +2,10 @@
 
 
 [![PyPI Latest Release](https://img.shields.io/pypi/v/pyaemet.svg)](https://pypi.org/project/pyaemet/)
-[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5655307.svg)](https://doi.org/10.5281/zenodo.5655307)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.5655307.svg)](10.5281/zenodo.7872570)
 [![License](https://img.shields.io/pypi/l/pandas.svg)](https://github.com/jaimedgp/pyAEMET/blob/main/LICENSE)
 [![Downloads](https://static.pepy.tech/personalized-badge/pyaemet?period=month&units=international_system&left_color=gray&right_color=orange&left_text=PyPI%20downloads%20per%20month)](https://pepy.tech/project/pyaemet)
+[![pyaemet](/advisor/python/pyaemet/badge.svg)](/advisor/python/pyaemet)
 
 A python library developed to download daily climatological values from the Spanish National
 Meteorological Agency (AEMET) through its OpenData API. The library contains several methods
@@ -86,4 +87,4 @@ under the docs directory.
 ## FAQ
 ## Contributing
 ## References
-* ["Estimating changes in air pollutant levels due to COVID-19 lockdown measures based on a business-as-usual prediction scenario using data mining models: A case-study for urban traffic sites in Spain"](https://doi.org/10.1016/j.scitotenv.2022.153786), submitted to Environmental Software & Modelling by [J. González-Pardo](https://orcid.org/0000-0001-7268-9933) et al. (2021)
+* ["Estimating changes in air pollutant levels due to COVID-19 lockdown measures based on a business-as-usual prediction scenario using data mining models: A case-study for urban traffic sites in Spain"](https://doi.org/10.1016/j.scitotenv.2022.153786), published in Science in Total Environment by [J. González-Pardo](https://orcid.org/0000-0001-7268-9933) et al. (2021)
