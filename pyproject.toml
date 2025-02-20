@@ -1,52 +1,44 @@
-[tool.poetry]
-name = "pyaemet"
-version = "1.1.0"
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
+[project]
+name = "pyaemet"
+version = "1.1.1"
 description = "Python module to interact with the AEMET API to download meteorological data"
 readme = "README.md"
-homepage = "https://github.com/jaimedgp/pyAEMET"
-repository = "https://github.com/jaimedgp/pyAEMET"
-license = "GPL-3.0-or-later"
-
-include = [
-    "LICENSE",
-]
-
-authors = [ "Jaimedgp <jaime.diez.gp@gmail.com>" ]
-maintainers = [
-    "CarmenGBM <carmen.garcia.be96@gmail.com>"
-]
-
-classifiers=[
+license = {text = "GPL-3.0-or-later"}
+authors = [{ name = "Jaimedgp", email = "jaime.diez.gp@gmail.com" }]
+maintainers = [{ name = "CarmenGBM", email = "carmen.garcia.be96@gmail.com" }]
+keywords = ["AEMET", "Meteorology", "API", "AEMET OpenData"]
+requires-python = ">=3.10"
+classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent"
 ]
-keywords=[ "AEMET", "Meteorology", "API", "AEMET OpenData" ]
 
-packages = [
-    { include = "pyaemet", from = "src" },
-]
-exclude = [
-    { path = ".env" },
+dependencies = [
+    "requests>=2.24.0",
+    "numpy>=1.19.0",
+    "matplotlib>=3.2.2",
+    "pandas>=1.1.0",
+    "geocoder>=1.38.0",
+    "folium>=0.11.0",
+    "tqdm>=4.46.1",
+    "setuptools>=75.8.0",
 ]
 
-[tool.poetry.urls]
+[project.urls]
+Homepage = "https://github.com/jaimedgp/pyAEMET"
+Repository = "https://github.com/jaimedgp/pyAEMET"
 "Bug Tracker" = "https://github.com/jaimedgp/pyAEMET/issues"
 
-[tool.poetry.dependencies]
-python = ">=3.8,<4.0"
-requests = "^2.24.0"
-numpy = "^1.19.0"
-matplotlib = "^3.2.2"
-pandas = "^1.1.0"
-geocoder = "^1.38.0"
-folium = "^0.11.0"
-tqdm = "^4.46.1"
+[tool.uv]
+managed = true
 
-[tool.poetry.group.test.dependencies]
-pytest = "6.0.0"
-python-dotenv = "0.14.0"
+[dependency-groups]
+test = [
+    "pytest>=6.0.0",
+    "python-dotenv>=0.14.0",
+]
 
-[build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"

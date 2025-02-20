@@ -10,6 +10,7 @@ from datetime import date, datetime
 from typing import Optional, Union
 from dateutil.relativedelta import relativedelta
 from pkg_resources import resource_stream
+from itertools import product
 
 from tqdm import tqdm
 import numpy as np
@@ -456,11 +457,13 @@ class AemetClima():
         """
 
         if isinstance(site, str):
-            pass
+            site = [[site]]
         elif isinstance(site, list):
-            site = ",".join(site)
+            sites = [site[i:i+25] for i in range(0, len(site), 25)]
+            site = sites
         elif isinstance(site, DataFrame):
-            site = ",".join(site.site.drop_duplicates().to_list())
+            sites = site.site.drop_duplicates().to_list()
+            site = [site[i:i+25] for i in range(0, len(site), 25)]
 
         data_list = []
         metadata = {}
@@ -471,11 +474,12 @@ class AemetClima():
         if verbosity:
             splited_dates = tqdm(splited_dates)
 
-        for start, end in splited_dates:
+        for dates, st in product(splited_dates, site):
+            start, end = dates
             data, meta = self._aemet_request \
                              .get_observations(fechaIniStr=start,
                                                fechaFinStr=end,
-                                               idema=site)
+                                               idema=",".join(st))
             data_list.append(data)
             metadata.update(meta)
 
